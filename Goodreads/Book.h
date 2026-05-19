@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
-//#include <memory>
+#include <memory>
 //#include "Author.h"
 //#include "Publisher.h"
 #include "Date.h"
@@ -36,6 +36,8 @@ private:
 	Date publishingDate;
 	unsigned int pagesCount;
 public:
+	Book(const std::string& title);
 	std::string getTitle() const;
 	double getAverageRating() const;
+	void addReview(double rating);
 };

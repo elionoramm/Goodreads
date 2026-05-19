@@ -1,7 +1,13 @@
 #pragma once
-#include "User.h"
+#include <string>
 class Message {
-	//std::unique_ptr<User> messanger;
+	std::string messenger;
 	bool status;
 	std::string messageContent;
+public:
+	Message(std::string messenger, bool status, std::string content);
+	std::string getMessenger() const;
+	bool getStatus() const;
+	std::string getMessageContent() const;
+	void markAsRead();
 };

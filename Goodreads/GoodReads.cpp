@@ -33,29 +33,85 @@ void GoodReads::ExecuteCommand(const std::string& line) {
 	}
 	if (substrings[0] == "help") {
 		command = new Help();
-		command->execute(substrings);
 	}
 	else if (substrings[0] == "register") {
 		command = new Register();
-		command->execute(substrings);
 	}
 	else if (substrings[0] == "login") {
 		command = new Login();
-		command->execute(substrings);
 	}
 	else if (substrings[0] == "logout") {
 		command = new Logout();
-		command->execute(substrings);
 	}
 	else if (substrings[0] == "exit") {
 		command = new Exit();
-		command->execute(substrings);
 	}
 	else if (substrings[0] == "search") {
 		command = new Search();
-		command->execute(substrings);
 	}
+	else if(substrings[0] == "follow") {
+		command = new Follow();
+	}
+	else if (substrings[0] == "add-book") {
+		command = new AddBook();
+	}
+	else if (substrings[0] == "create-shelf") {
+		command = new CreateShelf();
+	}
+	else if (substrings[0] == "delete-shelf") {
+		command = new DeleteShelf();
+	}
+	else if (substrings[0] == "add-to-shelf") {
+		command = new AddToShelf();
+	}
+	else if (substrings[0] == "remove-from-shelf") {
+		command = new RemoveFromShelf();
+	}
+	else if (substrings[0] == "delete-book") {
+		command = new DeleteBook();
+	}
+	else if (substrings[0] == "show-shelf") {
+		command = new ShowShelf();
+	}
+	else if (substrings[0] == "show-inbox") {
+		command = new ShowInbox();
+	}
+	else if (substrings[0] == "read-msg") {
+		command = new ReadMSG();
+	}
+	else if (substrings[0] == "delete-msg") {
+		command = new DeleteMSG();
+	}
+	else if (substrings[0] == "friends") {
+		command = new Friends();
+	}
+	else if (substrings[0] == "add-birthday") {
+		command = new AddBirthday();
+	}
+	else if (substrings[0] == "profile") {
+		command = new Profile();
+	}
+	//else if (substrings[0] == "accept_offer") {
+	//	command = new AcceptOffer();
+	//}
+	//else if (substrings[0] == "leave") {
+	//	command = new Leave();
+	//}
+	//else if (substrings[0] == "followers") {
+	//	command = new Followers();
+	//}
+	//else if (substrings[0] == "publish") {
+	//	command = new Publish();
+	//}
+	//else if (substrings[0] == "add_synopsis") {
+	//	command = new AddSynopsis();
+	//}
+	//else if (substrings[0] == "offer") {
+	//	command = new Offer();
+	//}
 	else {
-		std::cout << "Unknown command. Type 'help' for a list of commands." << std::endl;
+		std::cout << "Unknown command. Type 'help' for a list of commands.\n" << std::endl;
+		return;
 	}
+	command->execute(substrings);
 }

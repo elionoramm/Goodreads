@@ -49,78 +49,98 @@ public:
 	void execute(std::vector<std::string> substrings) override;
 };
 
-//class AddBook : public Command {
-//
-//};
-//
-//class CreateShelf : public Command {
-//
-//};
-//
-//class DeleteShelf : public Command {
-//
-//};
-//
-//class AddToShelf : public Command {
-//
-//};
-//
-//class RemoveFromShelf : public Command {
-//
-//};
-//
-//class DeleteBook : public Command {
-//
-//};
-//
-//class ShowShelf : public Command {
-//
-//};
-//
-//class ShowInbox : public Command { // both reader and author
-//
-//};
-//
-//class ReadMSG : public Command {
-//
-//};
-//
-//class DeleteMSG : public Command {
-//
-//};
-//
-//class Friends : public Command {
-//
-//};
-//
-//class AddBirthday : public Command {
-//
-//};
-//
-//class Profile : public Command {
-//
-//};
-//// Author commands
+class AddBook : public Command {
+public:
+	void execute(std::vector<std::string> substrings) override;
+};
+
+class CreateShelf : public Command {
+public:
+	void execute(std::vector<std::string> substrings) override;
+};
+
+class DeleteShelf : public Command {
+public:
+	void execute(std::vector<std::string> substrings) override;
+};
+
+class AddToShelf : public Command {
+public:
+	void execute(std::vector<std::string> substrings) override;
+};
+
+class RemoveFromShelf : public Command {
+public:
+	void execute(std::vector<std::string> substrings) override;
+};
+
+class DeleteBook : public Command {
+public:
+	void execute(std::vector<std::string> substrings) override;
+};
+
+class ShowShelf : public Command {
+public:
+	void execute(std::vector<std::string> substrings) override;
+};
+
+class ShowInbox : public Command {
+public:
+	void execute(std::vector<std::string> substrings) override;
+};
+
+class ReadMSG : public Command {
+public:
+	void execute(std::vector<std::string> substrings) override;
+};
+
+class DeleteMSG : public Command {
+public:
+	void execute(std::vector<std::string> substrings) override;
+};
+
+class Friends : public Command {
+public:
+	void execute(std::vector<std::string> substrings) override;
+};
+
+class AddBirthday : public Command {
+public:
+	void execute(std::vector<std::string> substrings) override;
+};
+
+class Profile : public Command {
+public:
+	void execute(std::vector<std::string> substrings) override;
+};
+
+// Author commands
 //class AcceptOffer : public Command {
-//
+//public:
+//	void execute(std::vector<std::string> substrings) override;
 //};
 //
 //class Leave : public Command {
-//
+//public:
+//	void execute(std::vector<std::string> substrings) override;
 //};
 //
 //class Followers : public Command {
-//
+//public:
+//	void execute(std::vector<std::string> substrings) override;
 //};
 //// Publisher commands
 //class Publish : public Command {
-//
+//public:
+//	void execute(std::vector<std::string> substrings) override;
 //};
 //
 //class AddSynopsis : public Command {
-//
+//public:
+//	void execute(std::vector<std::string> substrings) override;
 //};
 //
 //class Offer : public Command {
-//
+//public:
+//	void execute(std::vector<std::string> substrings) override;
 //};
