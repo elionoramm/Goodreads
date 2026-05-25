@@ -1,529 +1,357 @@
 #include "Commands.h"
 #include "Repository.cpp"
 
+// User commands
 // Implementing the Help command
+Help::Help(GoodReads& goodReads) : goodReads(goodReads) {}
+
 void Help::execute(std::vector<std::string> substrings) {
 	if (substrings.size() != 1) {
 		std::cout << "Usage: help\n" << std::endl;
 		return;
 	}
-	if(GoodReads::instance->getActiveUser() == nullptr) {
-		std::cout << "No user is currently logged in.\n" << std::endl;
-		return;
-	}
-	auto activeUser = GoodReads::instance->getActiveUser();
-	std::string userType = activeUser->getUserType();
-	std::cout << "register <username> <password> <userType>\n"
-		"login <username> <password>\n"
-		"logout\n"
-		"exit\n";
-	if (userType == "Reader" || userType == "Author") {
-		std::cout << "search <name>\n"
-			"follow <username>\n"
-			"add_book <bookName> <status> <rating>*\n"
-			"create_shelf <name>\n"
-			"delete_shelf <name>\n"
-			"add_to_shelf <bookName> <shelfName>\n"
-			"remove_from_shelf <bookName> <shelfName>\n"
-			"delete_book <bookName>\n"
-			"show_shelf <reader>* <shelfName>\n"
-			"show_inbox <filter>*\n"
-			"read_msg <index>\n"
-			"delete_msg <index>\n"
-			"friends <reader>*\n"
-			"add_birthday <date>*\n"
-			"profile <reader>*\n";
-	}
-	if (userType == "Author") {
-		std::cout << "accept_offer <index>\n"
-			"leave <publisher>\n"
-			"followers\n";
-	}
-	if (userType == "Publisher") {
-		std::cout << "publish <book_title>\n"
-			"add_synopsis <book_title> <synopsis>\n"
-			"offer <author_username> <book_title> <synopsis>\n" << std::endl;
-	}
+	goodReads.help();
 }
 
 // Implementing the Register command
+Register::Register(GoodReads& goodReads) : goodReads(goodReads) {}
+
 void Register::execute(std::vector<std::string> substrings) {
 	if (substrings.size() != 4) {
 		std::cout << "Usage: register <username> <password> <userType>\n" << std::endl;
 		return;
 	}
-	else {
-		std::string username = substrings[1];
-		std::string password = substrings[2];
-		std::string userType = substrings[3];
-		Repository<User> users = GoodReads::instance->getUsers();
-		for (size_t i = 0; i < users.size(); i++) {
-			if (users[i]->getUsername() == username) {
-				std::cout << "Username already exists.\n" << std::endl;
-				return;
-			}
-		}
-		std::shared_ptr<User> newUser;
-		if (userType == "reader") {
-			newUser = std::make_shared<Reader>(username, password);
-		}
-		else if (userType == "author") {
-			newUser = std::make_shared<Author>(username, password);
-		}
-		else if (userType == "publisher") {
-			newUser = std::make_shared<Publisher>(username, password);
-		}
-		else {
-			std::cout << "Invalid user type. Must be 'reader', 'author', or 'publisher'.\n" << std::endl;
-			return;
-		}
-		GoodReads::instance->getUsers().addElement(newUser);
-		std::cout << "User registered successfully!\n" << std::endl;
-		GoodReads::instance->setActiveUser(newUser);
-		std::cout << "You are now logged in as " << username << ".\n" << std::endl;
-	}
+	std::string username = substrings[1];
+	std::string password = substrings[2];
+	std::string userType = substrings[3];
+	goodReads.registerUser(substrings[1], substrings[2], substrings[3]);
 }
 
 // Implementing the Login command
+Login::Login(GoodReads& goodReads) : goodReads(goodReads) {}
+
 void Login::execute(std::vector<std::string> substrings) {
 	if (substrings.size() != 3) {
 		std::cout << "Usage: login <username> <password>\n" << std::endl;
 		return;
 	}
-	std::string username = substrings[1];
-	std::string password = substrings[2];
-	Repository<User> users = GoodReads::instance->getUsers();
-	for (size_t i = 0; i < users.size(); i++) {
-		if (users[i]->getUsername() == username) {
-			if (users[i]->getPassword() == password) {
-				GoodReads::instance->setActiveUser(users[i]);
-				std::cout << "Logged in successfully!\n" << std::endl;
-				return;
-			}
-			else {
-				std::cout << "Incorrect password.\n" << std::endl;
-				return;
-			}
-		}
-	}
-	std::cout << "Username not found.\n" << std::endl;
+	goodReads.logIn(substrings[1], substrings[2]);
 }
 
 // Implementing the Logout command
+Logout::Logout(GoodReads& goodReads) : goodReads(goodReads) {}
+
 void Logout::execute(std::vector<std::string> substrings) {
-	if (GoodReads::instance->getActiveUser() == nullptr) {
-		std::cout << "No user is currently logged in.\n" << std::endl;
+	if (substrings.size() != 1) {
+		std::cout << "Usage: logout\n" << std::endl;
 		return;
 	}
-	GoodReads::instance->setActiveUser(nullptr);
-	std::cout << "Logged out successfully.\n" << std::endl;
+	goodReads.logOut();
 }
 
 // Implementing the Exit command
+Exit::Exit(GoodReads& goodReads) : goodReads(goodReads) {}
+
 void Exit::execute(std::vector<std::string> substrings) {
-	std::cout << "Exiting the application. Goodbye!" << std::endl;
-	exit(0);
+	if (substrings.size() != 1) {
+		std::cout << "Usage: exit\n" << std::endl;
+		return;
+	}
+	goodReads.exit();
 }
 
+// Reader commands
 // Implementing the Search command
-bool Search::caseInsensitiveMatch(const std::string& str1, const std::string& str2) {
-	if (str1.size() != str2.size()) {
-		return false;
-	}
-	unsigned int differences = 0;
-	for (size_t i = 0; i < str1.size() && i < str2.size(); i++) {
-		if (tolower(str1[i]) != tolower(str2[i])) {
-			differences++;
-		}
-	}
-	return differences <= 2;
-}
+Search::Search(GoodReads& goodReads) : goodReads(goodReads) {}
 
 void Search::execute(std::vector<std::string> substrings) {
 	if (substrings.size() != 2) {
 		std::cout << "Usage: search <name>\n" << std::endl;
 		return;
 	}
-	std::string name = substrings[1];
-	Repository<User>& users = GoodReads::instance->getUsers();
-	Repository<Book>& books = GoodReads::instance->getBooks();
-	std::cout << "Users:\n";
-	unsigned int matches = 0;
-	for (size_t i = 0; i < users.size(); i++) {
-		if (caseInsensitiveMatch(users[i]->getUsername(), name)) {
-			std::cout << users[i]->getUsername() << " (" << users[i]->getUserType() << ")\n";
-			matches++;
-		}
-	}
-	if (matches == 0) {
-		std::cout << "No matches found.\n";
-	}
-	std::cout << "Books:\n";
-	matches = 0;
-	for (size_t i = 0; i < books.size(); i++) {
-		if (caseInsensitiveMatch(books[i]->getTitle(), name)) {
-			std::cout << books[i]->getTitle() << " (" << books[i]->getAverageRating() << ")\n";
-			matches++;
-		}
-	}
-	if (matches == 0) {
-		std::cout << "No matches found.\n" << std::endl;
-	}
+	goodReads.search(substrings[1]);
 }
 
 // Implementing the Follow command
+Follow::Follow(GoodReads& goodReads) : goodReads(goodReads) {}
+
 void Follow::execute(std::vector<std::string> substrings) {
 	if (substrings.size() != 2) {
 		std::cout << "Usage: search <name>\n" << std::endl;
 		return;
 	}
-	std::string username = substrings[1];
-	Repository<User>& users = GoodReads::instance->getUsers();
-	std::shared_ptr<Reader> reader = nullptr;
-	for (size_t i = 0; i < users.size(); i++) {
-		if (users[i]->getUsername() == username) {
-			if (users[i] == GoodReads::instance->getActiveUser()) {
-				std::cout << "You cannot follow yourself.\n" << std::endl;
-				return;
-			}
-			reader = std::dynamic_pointer_cast<Reader>(users[i]);
-		}
-	}
-	if (reader == nullptr) {
-		std::cout << "Username not found.\n" << std::endl;
+	goodReads.follow(substrings[1]);
+}
+
+// Implementing the AddBook command
+AddBook::AddBook(GoodReads& goodReads) : goodReads(goodReads) {}
+
+void AddBook::execute(std::vector<std::string> substrings) {
+	if (substrings.size() != 3 && substrings.size() != 4) {
+		std::cout << "Usage: add-book <bookName> <status> <rating>*\n" << std::endl;
 		return;
 	}
-	reader->getFollowers().addElement(GoodReads::instance->getActiveUser());
-	std::cout << "You are now following " << username << ".\n" << std::endl;
-	std::string activeUserUsername = GoodReads::instance->getActiveUser()->getUsername();
-	std::string messageContent = activeUserUsername + " has sent you a friend request.";
-	std::shared_ptr<Message> message = std::make_shared<Message>(activeUserUsername, 0, messageContent);
-	reader->receiveMessage(message);
-}
-// WIP what do we do about the status
-// Implementing the AddBook command
-void AddBook::execute(std::vector<std::string> substrings) {
-	std::string bookName;
-	std::string status;
-	double rating = 0;
-	if (substrings.size() == 4) {
-		bookName = substrings[1];
-		status = substrings[2];
+	double rating = 0.0;
+	if (substrings.size() == 4 && substrings[3] != "") {
 		rating = std::stod(substrings[3]);
 	}
-	else if (substrings.size() == 3) {
-		bookName = substrings[1];
-		status = substrings[2];
-	}
-	else {
-		std::cout << "Usage: add_book <bookName> <status> <rating>*\n" << std::endl;
-		return;
-	}
-	std::shared_ptr<Reader> reader = std::dynamic_pointer_cast<Reader>(GoodReads::instance->getActiveUser());
-	std::shared_ptr<Book> book = nullptr;
-	Repository<Book>& existingBooks = GoodReads::instance->getBooks();
-	Repository<Book>& userBooks = reader->getBooks();
-	for (size_t i = 0; i < userBooks.size(); i++) {
-		if (userBooks[i]->getTitle() == bookName) {
-			std::cout << "Book already exists in your collection.\n" << std::endl;
-			return;
-		}
-	}
-	for (size_t i = 0; i < existingBooks.size(); i++) {
-		if (existingBooks[i]->getTitle() == bookName) {
-			book = existingBooks[i];
-			break;
-		}
-	}
-	if (book == nullptr) {
-		std::cout << "Book not found in the repository.\n" << std::endl;
-		return;
-	}
-	reader->addBook(book, status, rating);
-	std::cout << "Book '" << bookName << "' added to your collection with status '" << status << "'\n" << std::endl;
+	std::string bookName = substrings[1];
+	std::string status = substrings[2];
+	goodReads.addToCollection(bookName, status, rating);
 }
 
 // Implementing the CreateShelf command
+CreateShelf::CreateShelf(GoodReads& goodReads) : goodReads(goodReads) {}
+
 void CreateShelf::execute(std::vector<std::string> substrings) {
 	if (substrings.size() != 2) {
-		std::cout << "Usage: crate-shelf <name>\n" << std::endl;
+		std::cout << "Usage: create-shelf <name>\n" << std::endl;
 		return;
 	}
 	std::string shelfName = substrings[1];
-	std::shared_ptr<Reader> reader = std::dynamic_pointer_cast<Reader>(GoodReads::instance->getActiveUser());
-	Repository<Shelf>& shelves = reader->getShelves();
-	for (size_t i = 0; i < shelves.size(); i++) {
-		if (shelves[i]->getName() == shelfName) {
-			std::cout << "A shelf with this name already exists.\n" << std::endl;
-			return;
-		}
-	}
-	reader->createShelf(shelfName);
-	std::cout << "Shelf '" << shelfName << "' created successfully.\n" << std::endl;
+	goodReads.createShelf(shelfName);
 }
 
 // Implementing the DeleteShelf command
+DeleteShelf::DeleteShelf(GoodReads& goodReads) : goodReads(goodReads) {}
+
 void DeleteShelf::execute(std::vector<std::string> substrings) {
 	if (substrings.size() != 2) {
 		std::cout << "Usage: delete-shelf <name>\n" << std::endl;
 		return;
 	}
 	std::string shelfName = substrings[1];
-	std::shared_ptr<Reader> reader = std::dynamic_pointer_cast<Reader>(GoodReads::instance->getActiveUser());
-	Repository<Shelf>& shelves = reader->getShelves();
-	for (size_t i = 0; i < shelves.size(); i++) {
-		if (shelves[i]->getName() == shelfName) {
-			shelves.removeElement(i);
-			std::cout << "Shelf '" << shelfName << "' deleted successfully.\n" << std::endl;
-			std::cout << reader->getShelves().size() << std::endl;
-			return;
-		}
-	}
-	std::cout << "Shelf not found.\n" << std::endl;
+	goodReads.deleteShelf(shelfName);
 }
 
 // Implementing the AddToShelf command
+AddToShelf::AddToShelf(GoodReads& goodReads) : goodReads(goodReads) {}
+
 void AddToShelf::execute(std::vector<std::string> substrings) {
 	if (substrings.size() != 3) {
-		std::cout << "Usage: add_to_shelf <bookName> <shelfName>\n" << std::endl;
+		std::cout << "Usage: add-to-shelf <bookName> <shelfName>\n" << std::endl;
 		return;
 	}
 	std::string bookName = substrings[1];
 	std::string shelfName = substrings[2];
-	Repository<Book>& existingBooks = GoodReads::instance->getBooks();
-	std::shared_ptr<Book> book = nullptr;
-	for (size_t i = 0; i < existingBooks.size(); i++) {
-		if (existingBooks[i]->getTitle() == bookName) {
-			book = existingBooks[i];
-			break;
-		}
-	}
-	if (book == nullptr) {
-		std::cout << "Book not found.\n" << std::endl;
-		return;
-	}
-	std::shared_ptr<Reader> reader = std::dynamic_pointer_cast<Reader>(GoodReads::instance->getActiveUser());
-	Repository<Shelf>& shelves = reader->getShelves();
-	for (size_t i = 0; i < shelves.size(); i++) {
-		if (shelves[i]->getName() == shelfName) {
-			std::vector<std::weak_ptr<Book>>& shelfBooks = reader->getShelfBooks(shelfName);
-			for (size_t j = 0; j < shelfBooks.size(); j++) {
-				if (shelfBooks[j].lock()->getTitle() == bookName) {
-					std::cout << "Book is already on that shelf.\n" << std::endl;
-					return;
-				}
-			}
-			shelfBooks.push_back(book);
-			std::cout << "Book '" << bookName << "' added to shelf '" << shelfName << "'.\n" << std::endl;
-			return;
-		}
-	}
-	std::cout << "Shelf not found.\n" << std::endl;
+	goodReads.addToShelf(bookName, shelfName);
 }
 
 // Implementing the RemoveFromShelf command
+RemoveFromShelf::RemoveFromShelf(GoodReads& goodReads) : goodReads(goodReads) {}
+
 void RemoveFromShelf::execute(std::vector<std::string> substrings) {
 	if (substrings.size() != 3) {
-		std::cout << "Usage: remove_from_shelf <bookName> <shelfName>\n" << std::endl;
+		std::cout << "Usage: remove-from-shelf <bookName> <shelfName>\n" << std::endl;
 		return;
 	}
 	std::string bookName = substrings[1];
 	std::string shelfName = substrings[2];
-	std::shared_ptr<Reader> reader = std::dynamic_pointer_cast<Reader>(GoodReads::instance->getActiveUser());
-	Repository<Shelf>& shelves = reader->getShelves();
-	for (size_t i = 0; i < shelves.size(); i++) {
-		if (shelves[i]->getName() == shelfName) {
-			std::vector<std::weak_ptr<Book>>& shelfBooks = reader->getShelfBooks(shelfName);
-			for (size_t j = 0; j < shelfBooks.size(); j++) {
-				if (shelfBooks[j].lock()->getTitle() == bookName) {
-					shelfBooks.erase(shelfBooks.begin() + j);
-					std::cout << "Book '" << bookName << "' removed from shelf '" << shelfName << "'.\n" << std::endl;
-					return;
-				}
-			}
-			std::cout << "Book not found on that shelf.\n" << std::endl;
-			return;
-		}
-	}
-	std::cout << "Shelf not found.\n" << std::endl;
+	goodReads.removeFromShelf(bookName, shelfName);
 }
 
 // Implementing the DeleteBook command
+DeleteBook::DeleteBook(GoodReads& goodReads) : goodReads(goodReads) {}
+
 void DeleteBook::execute(std::vector<std::string> substrings) {
 	if (substrings.size() != 2) {
-		std::cout << "Usage: delete_book <bookName>\n" << std::endl;
+		std::cout << "Usage: delete-book <bookName>\n" << std::endl;
 		return;
 	}
 	std::string bookName = substrings[1];
-	std::shared_ptr<Reader> reader = std::dynamic_pointer_cast<Reader>(GoodReads::instance->getActiveUser());
-	Repository<Book>& userBooks = reader->getBooks();
-	for (size_t i = 0; i < userBooks.size(); i++) {
-		if (userBooks[i]->getTitle() == bookName) {
-			userBooks.removeElement(i);
-			std::cout << "Book '" << bookName << "' removed from your collection.\n" << std::endl;
-			return;
-		}
-	}
-	std::cout << "Book '" << bookName << "' not found in your collection.\n" << std::endl;
+	goodReads.deleteBook(bookName);
 }
 
 // Implementing the ShowShelf command
+ShowShelf::ShowShelf(GoodReads& goodReads) : goodReads(goodReads) {}
+
 void ShowShelf::execute(std::vector<std::string> substrings) {
 	if (substrings.size() != 2 && substrings.size() != 3) {
-		std::cout << "Usage: show_shelf <reader>* <shelfName>\n" << std::endl;
+		std::cout << "Usage: show-shelf <reader>* <shelfName>\n" << std::endl;
 		return;
 	}
-	std::shared_ptr<Reader> reader = nullptr;
+	std::string username = "";
 	std::string shelfName;
 	if (substrings.size() == 3) {
-		std::string user = substrings[1];
-		Repository<User>& users = GoodReads::instance->getUsers();
-		for (size_t i = 0; i < users.size(); i++) {
-			if (users[i]->getUsername() == user) {
-				reader = std::dynamic_pointer_cast<Reader>(users[i]);
-			}
-		}
-		if (reader == nullptr) {
-			std::cout << user << " not found.\n" << std::endl;
-			return;
-		}
+		username = substrings[1];
 		shelfName = substrings[2];
 	}
-	else {
-		reader = std::dynamic_pointer_cast<Reader>(GoodReads::instance->getActiveUser());
+	else if (substrings.size() == 2) {
 		shelfName = substrings[1];
 	}
-	Repository<Shelf>& shelves = reader->getShelves();
-	for (size_t i = 0; i < shelves.size(); i++) {
-		if (shelves[i]->getName() == shelfName) {
-			std::cout << "Books in shelf '" << shelfName << "':\n";
-			shelves[i]->printShelf();
-			std::cout << std::endl;
-			return;
-		}
-	}
-	std::cout << "Shelf not found.\n" << std::endl;
+	goodReads.showShelf(username, shelfName);
 }
 
 // Implementing the ShowInbox command
+ShowInbox::ShowInbox(GoodReads& goodReads) : goodReads(goodReads) {}
+
 void ShowInbox::execute(std::vector<std::string> substrings) {
 	if (substrings.size() != 1 && substrings.size() != 2) {
-		std::cout << "Usage: show_inbox <filter>*\n" << std::endl;
+		std::cout << "Usage: show-inbox <filter>*\n" << std::endl;
 		return;
 	}
 	std::string filter = "";
-	std::shared_ptr<Reader> reader = std::dynamic_pointer_cast<Reader>(GoodReads::instance->getActiveUser());
 	if (substrings.size() == 2) {
 		filter = substrings[1];
-		std::cout << "Friend requests in your inbox:\n";
 	}
-	std::cout << "Messages in your inbox:\n";
-	reader->showInbox(filter);
-	std::cout << std::endl;
+	goodReads.showInbox(filter);
 }
 
 // Implementing the ReadMSG command
+ReadMSG::ReadMSG(GoodReads& goodReads) : goodReads(goodReads) {}
+
 void ReadMSG::execute(std::vector<std::string> substrings) {
 	if (substrings.size() != 2) {
-		std::cout << "Usage: read_msg <index>\n" << std::endl;
+		std::cout << "Usage: read-msg <index>\n" << std::endl;
 		return;
 	}
 	int index = std::stoi(substrings[1]);
-	std::shared_ptr<Reader> reader = std::dynamic_pointer_cast<Reader>(GoodReads::instance->getActiveUser());
-	reader->readMessage(index);
-	std::cout << std::endl;
+	goodReads.readMessage(index);
 }
 
 // Implementing the DeleteMSG command
+DeleteMSG::DeleteMSG(GoodReads& goodReads) : goodReads(goodReads) {}
+
 void DeleteMSG::execute(std::vector<std::string> substrings) {
 	if (substrings.size() != 2) {
-		std::cout << "Usage: delete_msg <index>\n" << std::endl;
+		std::cout << "Usage: delete-msg <index>\n" << std::endl;
 		return;
 	}
 	int index = std::stoi(substrings[1]);
-	std::shared_ptr<Reader> reader = std::dynamic_pointer_cast<Reader>(GoodReads::instance->getActiveUser());
-	reader->deleteMessage(index);
+	goodReads.deleteMessage(index);
 }
 
 // Implementing the Friends command
+Friends::Friends(GoodReads& goodReads) : goodReads(goodReads) {}
+
 void Friends::execute(std::vector<std::string> substrings) {
 	if (substrings.size() != 1 && substrings.size() != 2) {
 		std::cout << "Usage: friends <reader>*\n" << std::endl;
 		return;
 	}
-	std::shared_ptr<Reader> reader = nullptr;
+	std::string username = "";
 	if (substrings.size() == 2) {
-		std::string user = substrings[1];
-		Repository<User>& users = GoodReads::instance->getUsers();
-		for (size_t i = 0; i < users.size(); i++) {
-			if (users[i]->getUsername() == user) {
-				reader = std::dynamic_pointer_cast<Reader>(users[i]);
-			}
-		}
-		if (reader == nullptr) {
-			std::cout << user << " not found.\n" << std::endl;
-			return;
-		}
+		username = substrings[1];
 	}
-	else {
-		reader = std::dynamic_pointer_cast<Reader>(GoodReads::instance->getActiveUser());
-	}
-	std::cout << "List of friends:\n";
-	reader->printFriends(reader);
-	std::cout << std::endl;
+	goodReads.friends(username);
 }
 
 // Implementing the AddBirthday command
+AddBirthday::AddBirthday(GoodReads& goodReads) : goodReads(goodReads) {}
+
 void AddBirthday::execute(std::vector<std::string> substrings) {
-	if (substrings.size() != 2) {
-		std::cout << "Usage: add_birthday <date>*\n" << std::endl;
+	if (substrings.size() != 1 && substrings.size() != 2) {
+		std::cout << "Usage: add-birthday <date>*\n" << std::endl;
 		return;
 	}
-	std::shared_ptr<Reader> reader = std::dynamic_pointer_cast<Reader>(GoodReads::instance->getActiveUser());
-	if (substrings[1].size() == 1) {
-		reader->setBirthday(Date());
-		std::cout << "Birthday erased successfully.\n" << std::endl;
-		return;
+	Date birthday;
+	if (substrings.size() == 1) {
+		birthday = Date();
 	}
-	Date birthday = Date(substrings[1]);
-	reader->setBirthday(birthday);
-	std::cout << "Birthday added successfully.\n" << std::endl;
+	else if (substrings.size() == 2) {
+		birthday = Date(substrings[1]);
+	}
+	goodReads.addBirthday(birthday);
 }
 
 // Implementing the Profile command
+Profile::Profile(GoodReads& goodReads) : goodReads(goodReads) {}
+
 void Profile::execute(std::vector<std::string> substrings) {
 	if (substrings.size() != 1 && substrings.size() != 2) {
 		std::cout << "Usage: profile <reader>*\n" << std::endl;
 		return;
 	}
-	std::shared_ptr<Reader> reader = nullptr;
-	if (substrings.size() == 2) {
-		std::string user = substrings[1];
-		Repository<User>& users = GoodReads::instance->getUsers();
-		for (size_t i = 0; i < users.size(); i++) {
-			if (users[i]->getUsername() == user) {
-				reader = std::dynamic_pointer_cast<Reader>(users[i]);
-			}
-		}
-		if (reader == nullptr) {
-			std::cout << user << " not found.\n" << std::endl;
-			return;
-		}
+	std::string username;
+	if (substrings.size() == 1) {
+		username = "";
 	}
-	else if (substrings.size() == 1) {
-		reader = std::dynamic_pointer_cast<Reader>(GoodReads::instance->getActiveUser());
+	else {
+		username = substrings[1];
 	}
-	std::cout << "Username: " << reader->getUsername() << "\n";
-	std::cout << "Birthday: ";
-	reader->getBirthday().printDate();
-	std::cout << std::endl;
-	std::cout << "Shelves:\n";
-	reader->printShelves();
-	std::cout << std::endl;
-	std::cout << "Favorite Books:\n";
-	reader->printFavoriteBooks();
-	std::cout << std::endl;
-	std::cout << "Registered on: ";
-	reader->getRegistrationDate().printDate();
-	std::cout << std::endl;
+	goodReads.profile(username);
+}
+
+// Author commands
+// Implementing the AcceptOffer command
+AcceptOffer::AcceptOffer(GoodReads& goodReads) : goodReads(goodReads) {}
+
+void AcceptOffer::execute(std::vector<std::string> substrings) {
+	if (substrings.size() != 2) {
+		std::cout << "Usage: accept-offer <index>\n" << std::endl;
+		return;
+	}
+	int index = std::stoi(substrings[1]);
+	goodReads.acceptOffer(index);
+}
+
+// Implementing the Leave command
+Leave::Leave(GoodReads& goodReads) : goodReads(goodReads) {}
+
+void Leave::execute(std::vector<std::string> substrings) {
+	if (substrings.size() != 2) {
+		std::cout << "Usage: leave <publisher>\n" << std::endl;
+		return;
+	}
+	std::string publisherName = substrings[1];
+	goodReads.leave(publisherName);
+}
+
+// Implementing the Followers command
+Followers::Followers(GoodReads& goodReads) : goodReads(goodReads) {}
+
+void Followers::execute(std::vector<std::string> substrings) {
+	if (substrings.size() != 1) {
+		std::cout << "Usage: followers\n" << std::endl;
+		return;
+	}
+	goodReads.followers();
+}
+
+// Publisher commands
+// Implementing the Publish command
+Publish::Publish(GoodReads& goodReads) : goodReads(goodReads) {}
+
+void Publish::execute(std::vector<std::string> substrings) {
+	if (substrings.size() < 6) {
+		std::cout << "Usage: publish <bookTitle> <authorName> <releaseDate> <pageCount> <genres>\n" << std::endl;
+		return;
+	}
+	std::string bookTitle = substrings[1];
+	std::string authorName = substrings[2];
+	Date releaseDate = Date(substrings[3]);
+	int pageCount = std::stoi(substrings[4]);
+	std::vector<std::string> genres;
+	for (int i = 5; i < substrings.size(); i++) {
+		genres.push_back(substrings[i]);
+	}
+	goodReads.publish(bookTitle, authorName, releaseDate, pageCount, genres);
+}
+
+// Implementing the AddSynopsis command
+AddSynopsis::AddSynopsis(GoodReads& goodReads) : goodReads(goodReads) {}
+
+void AddSynopsis::execute(std::vector<std::string> substrings) {
+	if (substrings.size() < 3) {
+		std::cout << "Usage: add-synopsis <bookTitle> <synopsis>\n" << std::endl;
+		return;
+	}
+	std::string bookTitle = substrings[1];
+	std::string synopsis = "";
+	for (size_t i = 2; i < substrings.size(); i++) {
+		synopsis = synopsis + substrings[i] + " ";
+	}
+	goodReads.addSynopsis(bookTitle, synopsis);
+}
+
+//Implementing the Offer command
+Offer::Offer(GoodReads& goodReads) : goodReads(goodReads) {}
+
+void Offer::execute(std::vector<std::string> substrings) {
+	if (substrings.size() != 2) {
+		std::cout << "Usage: offer <author>\n" << std::endl;
+		return;
+	}
+	std::string authorName = substrings[1];
+	goodReads.offer(authorName);
 }

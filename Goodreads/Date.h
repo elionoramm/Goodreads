@@ -10,4 +10,5 @@ public:
 	Date();
 	Date(const std::string& string);
 	void printDate() const;
+	bool isSet() const;
 };

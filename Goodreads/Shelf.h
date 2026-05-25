@@ -12,4 +12,6 @@ public:
 	std::string getName() const;
 	std::vector<std::weak_ptr<Book>>& getBooks();
 	void printShelf() const;
+	void addBook(std::shared_ptr<Book> book);
+	void removeBook(const std::string& bookName);
 };

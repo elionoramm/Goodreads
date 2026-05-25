@@ -63,5 +63,12 @@ void Date::printDate() const {
 		std::cout << "N/A" << std::endl;
 		return;
 	}
-	std::cout << day << "/" << month << "/" << year << std::endl;
+	std::cout << (day < 10 ? "0" : "") << day << "/" << (month < 10 ? "0" : "") << month << "/" << year << std::endl;
+}
+
+bool Date::isSet() const {
+	if (day == 0 || month == 0 || year == 0) {
+		return false;
+	}
+	return true;
 }
