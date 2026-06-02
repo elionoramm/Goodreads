@@ -1,4 +1,5 @@
 #include "Message.h"
+#include <iostream>
 
 Message::Message(std::string messenger, bool status, std::string content) {
 	this->messenger = messenger;
@@ -20,4 +21,8 @@ std::string Message::getMessageContent() const {
 
 void Message::markAsRead() {
 	this->status = true;
+}
+
+void Message::saveMessage(std::fstream& file) const {
+	file << messenger << "\n" << std::to_string(status) << "\n" << messageContent << "\n";
 }

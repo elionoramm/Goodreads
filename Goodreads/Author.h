@@ -1,21 +1,26 @@
 #pragma once
 #include <vector>
+#include <string>
 #include <memory>
+#include <fstream>
 #include "Reader.h"
-//#include "Visitor.h"
 class Author : public Reader {
 private:
-	//std::vector<std::shared_ptr<Book>> booksPublished;
-	std::vector<std::weak_ptr<User>> publishers;
+	std::vector<Book> booksPublished;
+	std::vector<std::string> publishers;
 public:
-	void accept(Visitor* visitor) const override;
 	Author(const std::string& username, const std::string& password);
+	void loadUser(std::fstream& file) override;
+	void saveUser(std::fstream& file) const override;
 	std::string getUserType() const override;
 	void help() const override;
+	// for the author commands
 	void showInbox(const std::string& filter) const override;
-	void acceptOffer(const int index, const std::shared_ptr<User> publisher) override;
+	void acceptOffer(const int index, const std::string publisher) override;
 	std::string getPublisher(const int index) override;
-	void workWith(const std::shared_ptr<User> author) override;
-	void leave(const std::shared_ptr<User> user) override;
-	bool hasSentJobOffer(std::shared_ptr<User> publisher) const override;
+	void workWith(const std::string user) override;
+	void leave(const std::string publisher) override;
+	// for the publisher commands
+	void publish(const std::shared_ptr<Book>& book) override;
+	bool hasSentJobOffer(std::string publisher) const override;
 };

@@ -9,6 +9,7 @@ private:
 public:
 	Date();
 	Date(const std::string& string);
+	std::string dateToString() const;
 	void printDate() const;
 	bool isSet() const;
 };

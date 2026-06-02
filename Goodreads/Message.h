@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <fstream>
 class Message {
 	std::string messenger;
 	bool status;
@@ -10,4 +11,5 @@ public:
 	bool getStatus() const;
 	std::string getMessageContent() const;
 	void markAsRead();
+	void saveMessage(std::fstream& file) const;
 };

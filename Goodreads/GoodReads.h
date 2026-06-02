@@ -2,49 +2,48 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <fstream>
+#include "UserFactory.h"
 #include "User.h"
 #include "Reader.h"
 #include "Author.h"
 #include "Publisher.h"
 #include "Book.h"
-//#include "Visitor.h";
 
 class GoodReads {
 private:
 	std::vector<std::shared_ptr<User>> users;
 	std::shared_ptr<User> activeUser;
-	std::vector<std::shared_ptr<Book>> books;
 public:
-	void help() const;
-	void registerUser(const std::string& username, const std::string& password, const std::string& role);
-	void logIn(const std::string& username, const std::string& password);
-	void logOut();
-	void exit();
+	GoodReads();
+	void help(const std::vector<std::string>& params) const;
+	void registerUser(const std::vector<std::string>& params);
+	void logIn(const std::vector<std::string>& params);
+	void logOut(const std::vector<std::string>& params);
+	void exit(const std::vector<std::string>& params);
 	// for the reader commands
-	bool caseInsensitiveMatch(const std::string& str1, const std::string& str2) const;
-	void search(const std::string& name) const;
-	void follow(const std::string& username);
-	void addToCollection(const std::string& bookName, const std::string& status, double rating);
-	void createShelf(const std::string& shelfName);
-	void deleteShelf(const std::string& shelfName);
-	void addToShelf(const std::string& bookName, const std::string& shelfName);
-	void removeFromShelf(const std::string& bookName, const std::string& shalfName);
-	void deleteBook(const std::string& bookName);
-	void showShelf(const std::string& username, const std::string& shelfName) const;
-	void showInbox(const std::string& filter) const;
-	void readMessage(const int index);
-	void deleteMessage(const int index);
-	void friends(const std::string& username) const;
-	void addBirthday(const Date& birthday);
-	void profile(const std::string& username) const;
+	bool caseInsensitiveMatch(const std::string& str1, const std::string& str2) const; // helper function
+	void search(const std::vector<std::string>& params) const;
+	void follow(const std::vector<std::string>& params);
+	void addToCollection(const std::vector<std::string>& params);
+	void createShelf(const std::vector<std::string>& params);
+	void deleteShelf(const std::vector<std::string>& params);
+	void addToShelf(const std::vector<std::string>& params);
+	void removeFromShelf(const std::vector<std::string>& params);
+	void deleteBook(const std::vector<std::string>& params);
+	void showShelf(const std::vector<std::string>& params) const;
+	void showInbox(const std::vector<std::string>& params) const;
+	void readMessage(const std::vector<std::string>& params);
+	void deleteMessage(const std::vector<std::string>& params);
+	void friends(const std::vector<std::string>& params) const;
+	void addBirthday(const std::vector<std::string>& params);
+	void profile(const std::vector<std::string>& params) const;
 	// for the author commands
-	void acceptOffer(const int index) const;
-	void leave(const std::string publisherName);
-	void followers() const;
+	void acceptOffer(const std::vector<std::string>& params) const;
+	void leave(const std::vector<std::string>& params);
+	void followers(const std::vector<std::string>& params) const;
 	// for the publisher commands
-	void publish(const std::string title, const std::string authorName, const Date releaseDate, const int pageCount, const std::vector<std::string> genres);
-	void addSynopsis(const std::string bookTitle, const std::string synopsis);
-	void offer(const std::string authorName);
-	// just for testing
-	void addBook(const std::shared_ptr<Book> book);
+	void publish(const std::vector<std::string>& params);
+	void addSynopsis(const std::vector<std::string>& params);
+	void offer(const std::vector<std::string>& params);
 };

@@ -7,6 +7,12 @@ Date::Date(const std::string& string) {
 	std::vector<int> substrings;
 	for (int i = 0; i <= string.size(); i++) {
 		if (string[i] != '/' && string[i] != '\0') {
+			if (string[i] > '9' || string[i] < '0') {
+				this->day = 0;
+				this->month = 0;
+				this->year = 0;
+				return;
+			}
 			number = number + string[i];
 		}
 		else {
@@ -16,7 +22,7 @@ Date::Date(const std::string& string) {
 	}
 	try{
 		if (substrings.size() != 3) {
-			throw std::invalid_argument("Invalid date format. Expected format: 'day/month/year'.");
+			throw std::invalid_argument("Invalid date. Expected format: 'day/month/year'.");
 		}
 		if (substrings[2] < 0) {
 			throw std::out_of_range("Year cannot be negative.");
@@ -56,6 +62,10 @@ Date::Date(const std::string& string) {
 	this->day = substrings[0];
 	this->month = substrings[1];
 	this->year = substrings[2];
+}
+
+std::string Date::dateToString() const{
+	return std::to_string(day) + "/" + std::to_string(month) + "/" + std::to_string(year);
 }
 
 void Date::printDate() const {

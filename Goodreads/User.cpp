@@ -1,6 +1,32 @@
 #include <iostream>
 #include "User.h"
-#include "Repository.cpp"
+
+User::User(const std::string& username, const std::string& password) {
+	this->username = username;
+	this->password = password;
+	registrationDate = Date();
+}
+
+void User::loadUser(std::fstream& file) {
+	std::string registrationDateString;
+	file >> registrationDateString;
+	this->registrationDate = Date(registrationDateString);
+	std::string followersCount;
+	file >> followersCount;
+	for (size_t i = 0; i < static_cast<size_t>(std::stoull(followersCount)); i++) {
+		std::string follower;
+		file >> follower;
+		followers.push_back(follower);
+	}
+}
+
+void User::saveUser(std::fstream& file) const {
+	file << getUserType() << '\n' << username << '\n' << password << '\n' << registrationDate.dateToString() << '\n';
+	file << std::to_string(followers.size()) << '\n';
+	for (size_t i = 0; i < followers.size(); i++) {
+		file << followers[i] << '\n';
+	}
+}
 
 std::string User::getUsername() const {
 	return username;
@@ -14,8 +40,12 @@ Date User::getRegistrationDate() const {
 	return registrationDate;
 }
 
-void User::addFollower(const std::shared_ptr<User> follower) {
-	if (follower->getUsername() == username) {
+std::vector<std::string> User::getFollowers() const {
+	return followers;
+}
+
+void User::addFollower(const std::string follower) {
+	if (follower == username) {
 		std::cout << "You cannot follow yourself.\n" << std::endl;
 		return;
 	}
@@ -25,12 +55,12 @@ void User::addFollower(const std::shared_ptr<User> follower) {
 			return;
 		}
 	}
-	followers.addElement(follower);
+	followers.push_back(follower);
 	std::cout << "You are now following " << username << ".\n" << std::endl;
-	if (this->getUserType() != "Publisher") {
-		std::string activeUserUsername = follower->getUsername();
+	if (this->getUserType() != "publisher") {
+		std::string activeUserUsername = follower;
 		std::string messageContent = activeUserUsername + " has sent you a friend request.";
-		std::shared_ptr<Message> message = std::make_shared<Message>(activeUserUsername, 0, messageContent);
+		Message message = Message(activeUserUsername, 0, messageContent);
 		this->receiveMessage(message);
 	}
 	else {
@@ -41,7 +71,7 @@ void User::addFollower(const std::shared_ptr<User> follower) {
 void User::printFollowers() const {
 	std::cout << "Followers:\n";
 	for (size_t i = 0; i < followers.size(); i++) {
-		std::cout << "- " + followers[i]->getUsername() << std::endl;
+		std::cout << "- " << followers[i] << std::endl;
 	}
 	if (followers.size() == 0) {
 		std::cout << "You have no followers yet.\n" << std::endl;
@@ -50,7 +80,7 @@ void User::printFollowers() const {
 
 bool User::isFollowedBy(const std::string& username) const {
 	for (size_t i = 0; i < followers.size(); i++) {
-		if (followers[i]->getUsername() == username) {
+		if (followers[i] == username) {
 			return true;
 		}
 	}

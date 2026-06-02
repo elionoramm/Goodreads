@@ -10,13 +10,6 @@
 int main()
 {
 	GoodReads goodReads;
-	goodReads.registerUser("eli", "pass", "reader");
-	goodReads.registerUser("eli1", "pass", "author");
-	goodReads.registerUser("eli2", "pass", "publisher");
-	goodReads.logIn("eli2", "pass");
-	std::vector<std::string> genres;
-	goodReads.publish("book", "eli1", Date(), 100, genres);
-	goodReads.addSynopsis("book", "Bookish book about book things.");
 	while (true) {
 		std::string line;
 		std::cout << "Enter command: ";
@@ -28,11 +21,10 @@ int main()
 			if (line[i] != ' ' && line[i] != '\0') {
 				word = word + line[i];
 			}
-			else {
+			else if (word != "") {
 				substrings.push_back(word);
 				word = "";
 			}
-
 		}
 		if (substrings[0] == "help") {
 			command = std::make_unique<Help>(goodReads);
@@ -116,6 +108,7 @@ int main()
 			std::cout << "Unknown command. Type 'help' for a list of commands.\n" << std::endl;
 			continue;
 		}
+		substrings.erase(substrings.begin());
 		command->execute(substrings);
 	}
 }

@@ -1,39 +1,51 @@
 #include <iostream>
 #include "Author.h"
-// visitor
-void Author::accept(Visitor* visitor) const {
-	visitor->visitAuthor(*this);
-}
 
 Author::Author(const std::string& username, const std::string& password) : Reader(username, password) {}
 
+void Author::loadUser(std::fstream& file) {
+	Reader::loadUser(file);
+	std::string booksPublishedCount;
+	file >> booksPublishedCount;
+	for (size_t i = 0; i < static_cast<size_t>(std::stoull(booksPublishedCount)); i++) {
+		std::string title;
+		file >> title;
+		Book publishedBook = Book(title);
+		publishedBook.loadBook(file);
+		booksPublished.push_back(publishedBook);
+	}
+	std::string publishersCount;
+	file >> publishersCount;
+	for (size_t i = 0; i < static_cast<size_t>(std::stoull(publishersCount)); i++) {
+		std::string publisher;
+		file >> publisher;
+		publishers.push_back(publisher);
+	}
+}
+
+void Author::saveUser(std::fstream& file) const {
+	Reader::saveUser(file);
+	file << std::to_string(booksPublished.size()) << '\n';
+	// saving the published books
+	for (size_t i = 0; i < booksPublished.size(); i++) {
+		booksPublished[i].saveBook(file);
+	}
+	file << std::to_string(publishers.size()) << '\n';
+	// saving the publishers
+	for (size_t i = 0; i < publishers.size(); i++) {
+		file << publishers[i] << '\n';
+	}
+}
+
 std::string Author::getUserType() const {
-	return "Author";
+	return "author";
 }
 
 void Author::help() const {
-	std::cout << "register <username> <password> <userType>\n"
-		"login <username> <password>\n"
-		"logout\n"
-		"exit\n"
-		"search <name>\n"
-		"follow <username>\n"
-		"add-book <bookName> <status> <rating>*\n"
-		"create-shelf <name>\n"
-		"delete-shelf <name>\n"
-		"add-to-shelf <bookName> <shelfName>\n"
-		"remove-from-shelf <bookName> <shelfName>\n"
-		"delete-book <bookName>\n"
-		"show-shelf <reader>* <shelfName>\n"
-		"show-inbox <filter>*\n"
-		"read-msg <index>\n"
-		"delete-msg <index>\n"
-		"friends <reader>*\n"
-		"add-birth <date>*\n"
-		"profile <reader>*\n" 
-		"accept-offer <index>\n"
+	Reader::help();
+	std::cout << "accept-offer <index>\n"
 		"leave <publisher>\n"
-		"followers\n" << std::endl;
+		"followers\n";
 }
 
 void Author::showInbox(const std::string& filter) const {
@@ -41,18 +53,18 @@ void Author::showInbox(const std::string& filter) const {
 		std::cout << "Your inbox is empty.\n";
 		return;
 	}
-	if (filter == "") {
+	if (filter != "offers") {
 		std::cout << "Messages in your inbox:\n";
 		for (size_t i = 0; i < inbox.size(); i++) {
-			std::cout << i + 1 << ". from: " << inbox[i]->getMessenger() << ", status : " << (inbox[i]->getStatus() ? "read" : "unread") << "\n";
+			std::cout << i + 1 << ". from: " << inbox[i].getMessenger() << ", status : " << (inbox[i].getStatus() ? "read" : "unread") << "\n";
 		}
 	}
 	else {
 		int messageCount = 0;
 		std::cout << "Job offers in your inbox:\n";
 		for (size_t i = 0; i < inbox.size(); i++) {
-			if (inbox[i]->getMessageContent().find(" has sent you a job offer") != std::string::npos) {
-				std::cout << i + 1 << ". " << inbox[i]->getMessageContent() << " (from: " << inbox[i]->getMessenger() << ", status: " << (inbox[i]->getStatus() ? "read" : "unread") << ")\n";
+			if (inbox[i].getMessageContent().find(" has sent you a job offer") != std::string::npos) {
+				std::cout << i + 1 << ". " << inbox[i].getMessageContent() << " (from: " << inbox[i].getMessenger() << ", status: " << (inbox[i].getStatus() ? "read" : "unread") << ")\n";
 				messageCount++;
 			}
 		}
@@ -61,44 +73,47 @@ void Author::showInbox(const std::string& filter) const {
 		}
 	}
 }
-// WIP
 
 std::string Author::getPublisher(const int index) {
 	if (index < 1 || index > inbox.size()) {
 		std::cout << "Invalid message index.\n" << std::endl;
 		return "";
 	}
-	if (inbox[index - 1]->getMessageContent().find("has sent you a job offer") != std::string::npos) {
-		std::string publisher = inbox[index - 1]->getMessenger();
+	if (inbox[index - 1].getMessageContent().find("has sent you a job offer") != std::string::npos) {
+		std::string publisher = inbox[index - 1].getMessenger();
 		return publisher;
 	}
 	return "";
 }
 
-void Author::acceptOffer(const int index, const std::shared_ptr<User> publisher) {
+void Author::acceptOffer(const int index, const std::string publisher) {
 	workWith(publisher);
 	deleteMessage(index);
-	std::cout << "You have accepted a job offer from " << publisher->getUsername() << ".\n" << std::endl;
+	std::cout << "You have accepted a job offer from " << publisher << ".\n" << std::endl;
 }
 
-void Author::workWith(const std::shared_ptr<User> user) {
+void Author::workWith(const std::string user) {
 	publishers.push_back(user);
 }
 
-void Author::leave(const std::shared_ptr<User> user) {
+void Author::leave(const std::string publisher) {
 	for (size_t i = 0; i < publishers.size(); i++) {
-		if (publishers[i].lock() == user) {
+		if (publishers[i] == publisher) {
 			publishers.erase(publishers.begin() + i);
-			std::cout << "You have left " + user->getUsername() << ".\n" << std::endl;
+			std::cout << "You have left " + publisher << ".\n" << std::endl;
 			return;
 		}
 	}
 	std::cout << "You cannot leave a publisher you are not working with.\n" << std::endl;
 }
 
-bool Author::hasSentJobOffer(std::shared_ptr<User> publisher) const {
+void Author::publish(const std::shared_ptr<Book>& book) {
+	booksPublished.push_back(*book);
+}
+
+bool Author::hasSentJobOffer(std::string publisher) const {
 	for (size_t i = 0; i < inbox.size(); i++) {
-		if (inbox[i]->getMessenger() == publisher->getUsername()) {
+		if (inbox[i].getMessenger() == publisher) {
 			return true;
 		}
 	}
