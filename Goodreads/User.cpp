@@ -1,10 +1,13 @@
-#include <iostream>
 #include "User.h"
 
 User::User(const std::string& username, const std::string& password) {
 	this->username = username;
 	this->password = password;
-	registrationDate = Date();
+	std::time_t t = std::time(0);
+	std::tm datetime;
+	localtime_s(&datetime, &t);
+	std::string dateString = std::to_string(datetime.tm_mday) + "/" + std::to_string(datetime.tm_mon + 1) + "/" + std::to_string(datetime.tm_year + 1900);
+	registrationDate = Date(dateString);
 }
 
 void User::loadUser(std::fstream& file) {

@@ -21,7 +21,7 @@ public:
 	std::string getUserType() const override;
 	void help() const override;
 	// for the reader commands
-	void addToCollection(const std::shared_ptr<Book>& book, const std::string& status, const double rating) override;
+	void addBook(const std::shared_ptr<Book>& book, const std::string& status, const double rating) override;
 	void createShelf(const std::string& shelfName) override;
 	void deleteShelf(const std::string& shelfName) override;
 	void addToShelf(const std::shared_ptr<Book>& book, const std::string& shelfName) override;
@@ -30,8 +30,8 @@ public:
 	void showShelf(const std::string& shelfName) const override;
 	void showInbox(const std::string& filter) const override;
 	void receiveMessage(const Message& message) override;
-	void readMessage(size_t index) override;
-	void deleteMessage(size_t index) override;
+	void readMessage(const size_t& index) override;
+	void deleteMessage(const size_t& index) override;
 	void setBirthday(const Date& date) override;
 	Date getBirthday() const override;
 	void printShelves() const override;
@@ -39,12 +39,12 @@ public:
 	// for the author commands
 	void acceptOffer(const int index, const std::string publisher) override;
 	std::string getPublisher(const int index) override;
-	void workWith(const std::string user) override;
-	void leave(std::string publisher) override;
+	void workWith(const std::string& user) override;
+	void leave(const std::string& publisher) override;
 	// for the publisher commands
 	void publish(const std::shared_ptr<Book>& book) override;
-	bool isWorkingWithAuthor(std::string author) const override;
-	bool hasSentJobOffer(std::string publisher) const override;
+	bool isWorkingWith(const std::string& user) const override;
+	bool hasSentJobOffer(const std::string& publisher) const override;
 	std::vector<std::shared_ptr<Book>> getBooks() const override;
-	std::shared_ptr<Book> getBookByTitle(const std::string title) const override;
+	std::shared_ptr<Book> getBookByTitle(const std::string& title) const override;
 };

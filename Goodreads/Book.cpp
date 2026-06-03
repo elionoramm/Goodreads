@@ -7,7 +7,7 @@ Book::Book(const std::string title, const std::string author, const std::string 
 	this->title = title;
 	this->author = author;
 	this->publisher = publisher;
-	this->synopsis = "#";
+	this->synopsis = "";
 	this->genres = genres;
 	this->averageRating = 0;
 	this->reviewsCount = 0;
@@ -85,7 +85,7 @@ void Book::loadBook(std::fstream& file) {
 		file >> genre;
 		genres.push_back(genre);
 	}
-	file >> synopsis;
+	std::getline(file >> std::ws, synopsis);
 	std::string reviewsCount;
 	file >> reviewsCount;
 	this->reviewsCount = std::stoi(reviewsCount);

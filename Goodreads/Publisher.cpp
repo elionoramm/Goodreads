@@ -52,43 +52,51 @@ void Publisher::help() const {
 }
 
 // for the reader commands
-void Publisher::addToCollection(const std::shared_ptr<Book>& book, const std::string& status, const double rating) {
-	std::cout << "Publishers cannot add books to their collection.\n" << std::endl;
+void Publisher::addBook(const std::shared_ptr<Book>& book, const std::string& status, const double rating) {
+	throw WrongUserCommand(this->getUserType(), "add-book");
 }
 
 void Publisher::createShelf(const std::string& shelfName) {
-	std::cout << "Publishers cannot create shelves.\n" << std::endl;
+	throw WrongUserCommand(this->getUserType(), "create-shelf");
 }
 
 void Publisher::deleteShelf(const std::string& shelfName) {
-	std::cout << "Publishers cannot delete shelves.\n" << std::endl;
+	throw WrongUserCommand(this->getUserType(), "delete-shelf");
 }
 
 void Publisher::addToShelf(const std::shared_ptr<Book>& book, const std::string& shelfName) {
-	std::cout << "Publishers cannot add books to shelves.\n" << std::endl;
+	throw WrongUserCommand(this->getUserType(), "add-to-shelf");
 }
 
 void Publisher::removeFromShelf(const std::string& bookName, const std::string& shelfName) {
-	std::cout << "Publishers cannot remove books from shelves.\n" << std::endl;
+	throw WrongUserCommand(this->getUserType(), "remove-from-shelf");
 }
 
 void Publisher::deleteBook(const std::string& bookName) {
-	std::cout << "Publishers cannot delete books form their collection.\n" << std::endl;
+	throw WrongUserCommand(this->getUserType(), "delete-book");
 }
 
 void Publisher::showShelf(const std::string& shelfName) const {
-	std::cout << "Publishers cannot have shelves.\n" << std::ends;
+	throw WrongUserCommand(this->getUserType(), "show-shelf");
 }
 
-void Publisher::showInbox(const std::string& filter) const {}
+void Publisher::showInbox(const std::string& filter) const {
+	throw WrongUserCommand(this->getUserType(), "show-inbox");
+}
 
 void Publisher::receiveMessage(const Message& message) {}
 
-void Publisher::readMessage(size_t index) {}
+void Publisher::readMessage(const size_t& index) {
+	throw WrongUserCommand(this->getUserType(), "read-msg");
+}
 
-void Publisher::deleteMessage(size_t index) {}
+void Publisher::deleteMessage(const size_t& index) {
+	throw WrongUserCommand(this->getUserType(), "delete-msg");
+}
 
-void Publisher::setBirthday(const Date& date) {}
+void Publisher::setBirthday(const Date& date) {
+	throw WrongUserCommand(this->getUserType(), "add-birthday");
+}
 
 Date Publisher::getBirthday() const {
 	return Date();
@@ -96,7 +104,9 @@ Date Publisher::getBirthday() const {
 
 void Publisher::printShelves() const {}
 
-void Publisher::printFavoriteBooks() const {}
+void Publisher::printFavoriteBooks() const {
+	throw WrongUserCommand(this->getUserType(), "profile");
+}
 
 // for the author commands
 void Publisher::acceptOffer(const int index, const std::string publisher) {}
@@ -105,11 +115,11 @@ std::string Publisher::getPublisher(const int index) {
 	return "";
 }
 
-void Publisher::workWith(const std::string user) {
+void Publisher::workWith(const std::string& user) {
 	authors.push_back(user);
 }
 
-void Publisher::leave(const std::string author) {
+void Publisher::leave(const std::string& author) {
 	for (size_t i = 0; i < authors.size(); i++) {
 		if (authors[i] == author) {
 			authors.erase(authors.begin() + i);
@@ -122,16 +132,16 @@ void Publisher::publish(const std::shared_ptr<Book>& book) {
 	booksPublished.push_back(book);
 }
 
-bool Publisher::isWorkingWithAuthor(std::string author) const {
+bool Publisher::isWorkingWith(const std::string& user) const {
 	for (size_t i = 0; i < authors.size(); i++) {
-		if (authors[i] == author) {
+		if (authors[i] == user) {
 			return true;
 		}
 	}
 	return false;
 }
 
-bool Publisher::hasSentJobOffer(std::string publisher) const {
+bool Publisher::hasSentJobOffer(const std::string& publisher) const {
 	return false;
 }
 
@@ -139,7 +149,7 @@ std::vector<std::shared_ptr<Book>> Publisher::getBooks() const {
 	return booksPublished;
 }
 
-std::shared_ptr<Book> Publisher::getBookByTitle(const std::string title) const {
+std::shared_ptr<Book> Publisher::getBookByTitle(const std::string& title) const {
 	for (size_t i = 0; i < booksPublished.size(); i++) {
 		if (booksPublished[i]->getTitle() == title) {
 			return booksPublished[i];

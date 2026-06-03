@@ -3,10 +3,10 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "User.h"
-#include "Reader.h"
-#include "Author.h"
-#include "Publisher.h"
+//#include "User.h"
+//#include "Reader.h"
+//#include "Author.h"
+//#include "Publisher.h"
 #include "Command.h"
 #include "GoodReads.h"
 

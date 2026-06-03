@@ -3,13 +3,14 @@
 #include <vector>
 #include <memory>
 #include "GoodReads.h"
-#include "Reader.h"
-#include "Book.h"
+//#include "Reader.h"
+//#include "Book.h"
 #include "Command.h"
 #include "Commands.h"
-int main()
-{
-	GoodReads goodReads;
+#include "CustomUserExceptions.h"
+
+int main() {
+	GoodReads goodReads = GoodReads();
 	while (true) {
 		std::string line;
 		std::cout << "Enter command: ";
@@ -109,6 +110,20 @@ int main()
 			continue;
 		}
 		substrings.erase(substrings.begin());
-		command->execute(substrings);
+		try {
+			command->execute(substrings);
+		}
+		catch (const WrongUserCommand& ex) {
+			std::cout << ex.what() << '\n';
+		}
+		catch (const WrongCommandUsage& ex){
+			std::cout << ex.what() << '\n';
+		}
+		catch (const NotLoggedIn& ex) {
+			std::cout << ex.what() << '\n';
+		}
+		catch (const std::logic_error& ex) {
+			std::cout << ex.what() << '\n';
+		}
 	}
 }

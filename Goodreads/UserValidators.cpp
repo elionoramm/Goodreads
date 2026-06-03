@@ -1,0 +1,34 @@
+#include "UserValidators.h"
+void UserValidators::copyFrom(const UserValidators& other) {
+    std::vector<std::unique_ptr<UserValidator>> copiedValidators;
+    copiedValidators.reserve(other.validators.size());
+    for (const auto& validator : other.validators) {
+        copiedValidators.push_back(validator->clone());
+    }
+    validators = std::move(copiedValidators);
+}
+
+UserValidators::UserValidators(const UserValidators& other) {
+	copyFrom(other);
+}
+UserValidators& UserValidators::operator=(const UserValidators& other) {
+	if (this != &other) {
+		copyFrom(other);
+	}
+	return *this;
+}
+
+void UserValidators::addValidator(const UserValidator& validator) {
+    validators.push_back(validator.clone());
+}
+
+std::vector<std::string> UserValidators::validate(const std::shared_ptr<User>& user) const {
+    std::vector<std::string> allErrors;
+    for (const auto& validator : validators) {
+        std::vector<std::string> errors = validator->validate(user);
+        if (!errors.empty()) {
+            allErrors.insert(allErrors.end(), errors.begin(), errors.end());
+        }
+    }
+    return allErrors;
+}

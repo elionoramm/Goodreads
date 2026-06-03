@@ -92,11 +92,11 @@ void Author::acceptOffer(const int index, const std::string publisher) {
 	std::cout << "You have accepted a job offer from " << publisher << ".\n" << std::endl;
 }
 
-void Author::workWith(const std::string user) {
+void Author::workWith(const std::string& user) {
 	publishers.push_back(user);
 }
 
-void Author::leave(const std::string publisher) {
+void Author::leave(const std::string& publisher) {
 	for (size_t i = 0; i < publishers.size(); i++) {
 		if (publishers[i] == publisher) {
 			publishers.erase(publishers.begin() + i);
@@ -111,7 +111,16 @@ void Author::publish(const std::shared_ptr<Book>& book) {
 	booksPublished.push_back(*book);
 }
 
-bool Author::hasSentJobOffer(std::string publisher) const {
+bool Author::isWorkingWith(const std::string& user) const {
+	for (size_t i = 0; i < publishers.size(); i++) {
+		if (publishers[i] == user) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Author::hasSentJobOffer(const std::string& publisher) const {
 	for (size_t i = 0; i < inbox.size(); i++) {
 		if (inbox[i].getMessenger() == publisher) {
 			return true;

@@ -119,7 +119,7 @@ void Reader::help() const {
 		"profile <reader>*\n";
 }
 
-void Reader::addToCollection(const std::shared_ptr<Book>& book, const std::string& status, const double rating) {
+void Reader::addBook(const std::shared_ptr<Book>& book, const std::string& status, const double rating) {
 	for (auto& [profileBook, currentStatus, currentRrating] : profileBooks) {
 		if (profileBook.getTitle() == book->getTitle()) {
 			if (currentRrating != 0 && rating != 0) {
@@ -272,7 +272,7 @@ void Reader::receiveMessage(const Message& message) {
 	inbox.push_back(message);
 }
 
-void Reader::readMessage(size_t index) {
+void Reader::readMessage(const size_t& index) {
 	if (index < 1 || index > inbox.size()) {
 		std::cout << "Invalid message index.\n" << std::endl;
 		return;
@@ -282,7 +282,7 @@ void Reader::readMessage(size_t index) {
 	message.markAsRead();
 }
 
-void Reader::deleteMessage(size_t index) {
+void Reader::deleteMessage(const size_t& index) {
 	if (index < 1 || index > inbox.size()) {
 		std::cout << "Invalid message index.\n" << std::endl;
 		return;
@@ -331,23 +331,29 @@ void Reader::printFavoriteBooks() const {
 	}
 }
 
-void Reader::acceptOffer(const int index, const std::string publisher) {}
+void Reader::acceptOffer(const int index, const std::string publisher) {
+	throw WrongUserCommand(this->getUserType(), "accept-offer");
+}
 
 std::string Reader::getPublisher(const int index) {
 	return "";
 }
 
-void Reader::workWith(const std::string user) {}
+void Reader::workWith(const std::string& user) {}
 
-void Reader::leave(const std::string publisher) {}
+void Reader::leave(const std::string& publisher) {
+	throw WrongUserCommand(this->getUserType(), "leave");
+}
 
-void Reader::publish(const std::shared_ptr<Book>& book) {}
+void Reader::publish(const std::shared_ptr<Book>& book) {
+	throw WrongUserCommand(this->getUserType(), "publish");
+}
 
-bool Reader::isWorkingWithAuthor(std::string author) const {
+bool Reader::isWorkingWith(const std::string& author) const {
 	return false;
 }
 
-bool Reader::hasSentJobOffer(std::string publisher) const {
+bool Reader::hasSentJobOffer(const std::string& publisher) const {
 	return false;
 }
 
@@ -356,6 +362,6 @@ std::vector<std::shared_ptr<Book>> Reader::getBooks() const {
 	return books;
 }
 
-std::shared_ptr<Book> Reader::getBookByTitle(const std::string title) const {
+std::shared_ptr<Book> Reader::getBookByTitle(const std::string& title) const {
 	return nullptr;
 }

@@ -20,44 +20,41 @@ Date::Date(const std::string& string) {
 			number = "";
 		}
 	}
-	try{
-		if (substrings.size() != 3) {
-			throw std::invalid_argument("Invalid date. Expected format: 'day/month/year'.");
-		}
-		if (substrings[2] < 0) {
-			throw std::out_of_range("Year cannot be negative.");
-		}
-		if (substrings[1] < 1 || substrings[1] > 12) {
-			throw std::out_of_range("Month must be between 1 and 12.");
-		}
-		if (substrings[1] == 1 || substrings[1] == 3 || substrings[1] == 5 || substrings[1] == 7 || substrings[1] == 8 || substrings[1] == 10 || substrings[1] == 12) {
-			if (substrings[0] < 1 || substrings[0] > 31) {
-				throw std::out_of_range("Day must be between 1 and 31.");
-			}
-		}
-		else if (substrings[1] == 4 || substrings[1] == 6 || substrings[1] == 9 || substrings[1] == 11) {
-			if (substrings[0] < 1 || substrings[0] > 30) {
-				throw std::out_of_range("Day must be between 1 and 30.");
-			}
-		}
-		else if (substrings[1] == 2 && substrings[2] % 4 == 0 && substrings[2] % 100 != 0 && substrings[2] % 400 == 0) {
-			if (substrings[0] < 1 || substrings[0] > 29) {
-				throw std::out_of_range("Day must be between 1 and 29.");
-			}
-		}
-		else if (substrings[1] == 2) {
-			if (substrings[0] < 1 || substrings[0] > 28) {
-				throw std::out_of_range("Day must be between 1 and 28.");
-			}
+	if (substrings[0] == 0 && substrings[1] == 0 && substrings[2] == 0) {
+		this->day = 0;
+		this->month = 0;
+		this->year = 0;
+		return;
+	}
+	if (substrings.size() != 3) {
+		throw std::invalid_argument("Invalid date. Expected format: 'day/month/year'.");
+	}
+	if (substrings[2] < 0) {
+		throw std::out_of_range("Year cannot be negative.");
+	}
+	if (substrings[1] < 1 || substrings[1] > 12) {
+		std::cout << substrings[1];
+		throw std::out_of_range("Month must be between 1 and 12.");
+	}
+	if (substrings[1] == 1 || substrings[1] == 3 || substrings[1] == 5 || substrings[1] == 7 || substrings[1] == 8 || substrings[1] == 10 || substrings[1] == 12) {
+		if (substrings[0] < 1 || substrings[0] > 31) {
+			throw std::out_of_range("Day must be between 1 and 31.");
 		}
 	}
-	catch (const std::out_of_range& exception) {
-		std::cerr << "Invalid date: " << exception.what() << std::endl;
-		throw;
+	else if (substrings[1] == 4 || substrings[1] == 6 || substrings[1] == 9 || substrings[1] == 11) {
+		if (substrings[0] < 1 || substrings[0] > 30) {
+			throw std::out_of_range("Day must be between 1 and 30.");
+		}
 	}
-	catch (const std::invalid_argument& exception) {
-		std::cerr << "Invalid date: " << exception.what() << std::endl;
-		throw;
+	else if (substrings[1] == 2 && substrings[2] % 4 == 0 && substrings[2] % 100 != 0 && substrings[2] % 400 == 0) {
+		if (substrings[0] < 1 || substrings[0] > 29) {
+			throw std::out_of_range("Day must be between 1 and 29.");
+		}
+	}
+	else if (substrings[1] == 2) {
+		if (substrings[0] < 1 || substrings[0] > 28) {
+			throw std::out_of_range("Day must be between 1 and 28.");
+		}
 	}
 	this->day = substrings[0];
 	this->month = substrings[1];

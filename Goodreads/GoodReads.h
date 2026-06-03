@@ -5,17 +5,21 @@
 #include <fstream>
 #include "UserFactory.h"
 #include "User.h"
-#include "Reader.h"
-#include "Author.h"
-#include "Publisher.h"
+#include "UserSystem.h"
+#include "UsernameValidator.h"
+#include "PasswordValidator.h"
+#include "CustomUserExceptions.h"
 #include "Book.h"
 
 class GoodReads {
 private:
-	std::vector<std::shared_ptr<User>> users;
+	UserSystem userSystem;
 	std::shared_ptr<User> activeUser;
 public:
 	GoodReads();
+	std::shared_ptr<User> findUser(const std::string& username) const;
+	std::shared_ptr<Book> findBook(const std::string& bookName) const;
+	std::shared_ptr<User> getActiveUser() const;
 	void help(const std::vector<std::string>& params) const;
 	void registerUser(const std::vector<std::string>& params);
 	void logIn(const std::vector<std::string>& params);
@@ -25,7 +29,7 @@ public:
 	bool caseInsensitiveMatch(const std::string& str1, const std::string& str2) const; // helper function
 	void search(const std::vector<std::string>& params) const;
 	void follow(const std::vector<std::string>& params);
-	void addToCollection(const std::vector<std::string>& params);
+	void addBook(const std::vector<std::string>& params);
 	void createShelf(const std::vector<std::string>& params);
 	void deleteShelf(const std::vector<std::string>& params);
 	void addToShelf(const std::vector<std::string>& params);

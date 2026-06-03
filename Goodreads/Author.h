@@ -18,9 +18,10 @@ public:
 	void showInbox(const std::string& filter) const override;
 	void acceptOffer(const int index, const std::string publisher) override;
 	std::string getPublisher(const int index) override;
-	void workWith(const std::string user) override;
-	void leave(const std::string publisher) override;
+	void workWith(const std::string& user) override;
+	void leave(const std::string& publisher) override;
 	// for the publisher commands
 	void publish(const std::shared_ptr<Book>& book) override;
-	bool hasSentJobOffer(std::string publisher) const override;
+	bool isWorkingWith(const std::string& user) const override;
+	bool hasSentJobOffer(const std::string& publisher) const override;
 };

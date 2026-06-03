@@ -1,6 +1,24 @@
 #include "GoodReads.h"
 
-GoodReads::GoodReads() {
+GoodReads::GoodReads(){
+	auto userValidators = std::make_unique<UserValidators>();
+	UsernameValidator usernameValidator = UsernameValidator::Builder()
+		.minLength(6)
+		.maxLength(24)
+		.allowSpecialCharacters(false)
+		.build();
+
+	PasswordValidator passwordValidator = PasswordValidator::Builder()
+		.minLength(12)
+		.maxLength(36)
+		.requireLowercaseLetter()
+		.requireUppercaseLetter()
+		.requireSpecialCharacter(true)
+		.build();
+	
+	userValidators->addValidator(usernameValidator);
+	userValidators->addValidator(passwordValidator);
+	userSystem = UserSystem(*userValidators);
 	activeUser = nullptr;
 	std::fstream file;
 	file.open("GoodReads.txt", std::fstream::in);
@@ -11,109 +29,112 @@ GoodReads::GoodReads() {
 			std::string userType, username, password;
 			file >> userType >> username >> password;
 			try {
-				users.push_back(UserFactory::createUser(userType, username, password));
+				std::shared_ptr<User> user = UserFactory::createUser(userType, username, password);
+				user->loadUser(file);
+				userSystem.addUser(user);
 			}
-			catch (const std::invalid_argument& e) {
-				std::cout << e.what() << "\n" << std::endl;
-			}
-			users[i]->loadUser(file);
+			catch (const std::invalid_argument& ex) {
+				std::cout << ex.what() << "\n" << std::endl;
+			}	
 		}
 	}
 	else {
 		std::cout << "No save file found." << std::endl;
 	}
+	
+}
+
+std::shared_ptr<User> GoodReads::findUser(const std::string& username) const {
+	std::vector<std::shared_ptr<User>> users = userSystem.getUsers();
+	for (size_t i = 0; i < users.size(); i++) {
+		if (users[i]->getUsername() == username) {
+			return users[i];
+		}
+	}
+	return nullptr;
+}
+
+std::shared_ptr<Book> GoodReads::findBook(const std::string& bookName) const {
+	std::vector<std::shared_ptr<User>> users = userSystem.getUsers();
+	for(size_t i = 0; i < users.size(); i++) {
+		if (users[i]->getUserType() == "publisher") {
+			return users[i]->getBookByTitle(bookName);
+		}
+	}
+	return nullptr;
+}
+
+std::shared_ptr<User> GoodReads::getActiveUser() const {
+	return activeUser;
 }
 
 void GoodReads::help(const std::vector<std::string>& params) const {
-	if (params.size() != 0) {
-		std::cout << "Usage: help\n" << std::endl;
-		return;
-	}
 	if (activeUser == nullptr) {
-		std::cout << "No user is currently logged in. Use either \n"
-			"register <username> <password> <userType>\n"
-			"login <username> <password>\n" << std::endl;
-		return;
+		throw NotLoggedIn();
 	}
 	activeUser->help();
 	std::cout << std::endl;
 }
 
 void GoodReads::registerUser(const std::vector<std::string>& params) {
-	if (params.size() != 3) {
-		std::cout << "Usage: register <username> <password> <userType>\n" << std::endl;
-		return;
-	}
 	std::string username = params[0];
 	std::string password = params[1];
 	std::string userType = params[2];
-	for (size_t i = 0; i < users.size(); i++) {
-		if (users[i]->getUsername() == username) {
-			std::cout << "Username already exists.\n" << std::endl;
-			return;
-		}
-	}
 	try {
-		users.push_back(UserFactory::createUser(userType, username, password));
+		std::shared_ptr<User> user = UserFactory::createUser(userType, username, password);
+		userSystem.addUser(user);
+		std::cout << "User registered successfully.\n";
+		activeUser = user;
 	}
-	catch (const std::invalid_argument& e) {
-		std::cout << e.what() << "\n" << std::endl;
-		return;
+	catch (const std::invalid_argument& ex) {
+		std::cout << ex.what() << '\n';
 	}
-	std::cout << "User registered successfully.\n";
-	logIn({ username, password });
+	catch (const ValidationFailedException& ex) {
+		std::cout << ex.what() << '\n';
+		for (const std::string& error : ex.getValidationErrors()) {
+			std::cout << "- " << error << '\n';
+		}
+		std::cout << std::endl;
+	}
+	catch (const UserAlreadyExistsException& ex) {
+		std::cout << ex.what() << '\n';
+	}
 }
 
 void GoodReads::logIn(const std::vector<std::string>& params) {
-	if (params.size() != 2) {
-		std::cout << "Usage: login <username> <password>\n" << std::endl;
-		return;
-	}
 	std::string username = params[0];
 	std::string password = params[1];
 	if (activeUser != nullptr) {
-		logOut({});
+		throw std::logic_error("You must log out before logging into a different account.\n");
 	}
-	else if (activeUser != nullptr && activeUser->getUsername() == username) {
-		std::cout << "You are already logged in.\n" << std::endl;
+	if (activeUser != nullptr && activeUser->getUsername() == username) {
+		throw std::logic_error("You are already logged in.\n");
 	}
-	for (size_t i = 0; i < users.size(); i++) {
-		if (users[i]->getUsername() == username) {
-			if (users[i]->getPassword() == password) {
-				activeUser = users[i];
-				std::cout << "Logged in successfully.\n" << std::endl;
-				return;
-			}
-			else {
-				std::cout << "Incorrect password.\n" << std::endl;
-				return;
-			}
-		}
+	std::shared_ptr<User> user = findUser(username);
+	if (user == nullptr) {
+		throw std::invalid_argument("Username not found.\n");
 	}
-	std::cout << "Username not found.\n" << std::endl;
+	if (user->getPassword() == password) {
+		activeUser = user;
+		std::cout << "Logged in successfully.\n" << std::endl;
+		return;
+	}
+	std::cout << "Incorrect password.\n" << std::endl;	
 }
 
 void GoodReads::logOut(const std::vector<std::string>& params) {
-	if (params.size() != 0) {
-		std::cout << "Usage: logout\n" << std::endl;
-		return;
-	}
 	if (activeUser == nullptr) {
-		std::cout << "No user is currently logged in.\n" << std::endl;
-		return;
+		throw std::logic_error("No user is currently logged in.");
 	}
 	activeUser = nullptr;
 	std::cout << "Logged out successfully.\n" << std::endl;
 }
 
 void GoodReads::exit(const std::vector<std::string>& params) {
-	if (params.size() != 0) {
-		std::cout << "Usage: exit\n" << std::endl;
-		return;
-	}
 	std::fstream file;
 	file.open("GoodReads.txt", std::fstream::out);
 	if (file.is_open()) {
+		std::vector<std::shared_ptr<User>> users = userSystem.getUsers();
 		file << users.size() << std::endl;
 		for (size_t i = 0; i < users.size(); i++) {
 			users[i]->saveUser(file);
@@ -138,13 +159,16 @@ bool GoodReads::caseInsensitiveMatch(const std::string& str1, const std::string&
 }
 
 void GoodReads::search(const std::vector<std::string>& params) const {
-	if (params.size() != 1) {
-		std::cout << "Usage: search <name>\n" << std::endl;
-		return;
+	if (activeUser == nullptr) {
+		throw NotLoggedIn();
+	}
+	if (activeUser->getUserType() == "publisher") {
+		throw WrongUserCommand("publisher", "search");
 	}
 	std::string name = params[0];
 	std::cout << "Users:\n";
 	unsigned int matches = 0;
+	std::vector<std::shared_ptr<User>> users = userSystem.getUsers();
 	for (size_t i = 0; i < users.size(); i++) {
 		if (caseInsensitiveMatch(users[i]->getUsername(), name)) {
 			std::cout << users[i]->getUsername() << " (" << users[i]->getUserType() << ")\n";
@@ -175,146 +199,92 @@ void GoodReads::search(const std::vector<std::string>& params) const {
 }
 
 void GoodReads::follow(const std::vector<std::string>& params) {
-	if (params.size() != 1) {
-		std::cout << "Usage: search <name>\n" << std::endl;
-		return;
-	}
-	std::string username = params[0];
 	if (activeUser == nullptr) {
-		std::cout << "You must be logged into an account to follow someone.\n" << std::endl;
-		return;
+		throw NotLoggedIn();
 	}
-	for (size_t i = 0; i < users.size(); i++) {
-		if (users[i]->getUsername() == username) {
-			users[i]->addFollower(activeUser->getUsername());
-			return;
-		}
+	if (activeUser->getUserType() == "publisher") {
+		throw WrongUserCommand("publisher", "follow");
 	}
-	std::cout << "Username not found.\n" << std::endl;
+	std::shared_ptr<User> user = findUser(params[0]);
+	if (user == nullptr) {
+		throw std::invalid_argument("Username not found.\n");
+	}
+	user->addFollower(activeUser->getUsername());
 }
 
-void GoodReads::addToCollection(const std::vector<std::string>& params) {
-	if (params.size() != 2 && params.size() != 3) {
-		std::cout << "Usage: add-book <bookName> <status> <rating>*\n" << std::endl;
-		return;
+void GoodReads::addBook(const std::vector<std::string>& params) {
+	if (activeUser == nullptr) {
+		throw NotLoggedIn();
 	}
 	double rating = 0.0;
-	if (params.size() == 3 && params[2] != "") {
-		for (size_t i = 0; i < params[2].size(); i++) {
-			if ((params[2][i] > '9' || params[2][i] < '0') && params[2][i] != '.') {
-				std::cout << "Invalid ratung.\n" << std::endl;
-				return;
-			}
+	if (params.size() == 3) {
+		try {
+			rating = std::stod(params[2]);
 		}
-		rating = std::stod(params[2]);
+		catch (const std::invalid_argument& e) {
+			std::cout << "Invalid rating.\n" << std::endl;
+			return;
+		}
 	}
 	std::string bookName = params[0];
 	std::string status = params[1];
 	if (status != "want-to-read" && status != "currently-reading" && status != "paused" && status != "did-not-finish" && status != "read") {
-		std::cout << "Invalid status.\n" << std::endl;
-		return;
+		throw std::invalid_argument("Invalid status.\n");
 	}
-	if (activeUser == nullptr) {
-		std::cout << "You must be logged into an account to add a book.\n" << std::endl;
-		return;
-	}
-	std::shared_ptr<Book> book = nullptr;
-	for (size_t i = 0; i < users.size(); i++) {
-		if (users[i]->getUserType() == "publisher") {
-			book = users[i]->getBookByTitle(bookName);
-			if (book != nullptr) {
-				break;
-			}
-		}
-	}
+	std::shared_ptr<Book> book = findBook(bookName);
 	if (book == nullptr) {
-		std::cout << "Book not found in the system.\n" << std::endl;
-		return;
+		throw std::invalid_argument("Book not found in the system.\n");
 	}
-	activeUser->addToCollection(book, status, rating);
+	activeUser->addBook(book, status, rating);
 }
 
 void GoodReads::createShelf(const std::vector<std::string>& params) {
-	if (params.size() != 1) {
-		std::cout << "Usage: create-shelf <name>\n" << std::endl;
-		return;
-	}
 	std::string shelfName = params[0];
 	if (activeUser == nullptr) {
-		std::cout << "You must be logged into an account to create a shelf.\n" << std::endl;
-		return;
+		throw NotLoggedIn();
 	}
 	activeUser->createShelf(shelfName);
 }
 
 void GoodReads::deleteShelf(const std::vector<std::string>& params) {
-	if (params.size() != 1) {
-		std::cout << "Usage: delete-shelf <name>\n" << std::endl;
-		return;
-	}
 	std::string shelfName = params[0];
 	if (activeUser == nullptr) {
-		std::cout << "You must be logged into an account to delete a shelf.\n" << std::endl;
-		return;
+		throw NotLoggedIn();
 	}
 	activeUser->deleteShelf(shelfName);
 }
 
 void GoodReads::addToShelf(const std::vector<std::string>& params) {
-	if (params.size() != 2) {
-		std::cout << "Usage: add-to-shelf <bookName> <shelfName>\n" << std::endl;
-		return;
-	}
 	std::string bookName = params[0];
 	std::string shelfName = params[1];
 	if (activeUser == nullptr) {
-		std::cout << "You must be logged into an account to add a book to a shelf.\n" << std::endl;
-		return;
+		throw NotLoggedIn();
 	}
-	std::shared_ptr<Book> book = nullptr;
-	for (size_t i = 0; i < users.size(); i++) {
-		if (users[i]->getUserType() == "publisher") {
-			book = users[i]->getBookByTitle(bookName);
-			if (book != nullptr) {
-				break;
-			}
-		}
-	}
+	std::shared_ptr<Book> book = findBook(bookName);
 	if (book == nullptr) {
-		std::cout << "Book not found in the system.\n" << std::endl;
-		return;
+		throw std::invalid_argument("Book not found in the system.\n");
 	}
 	activeUser->addToShelf(book, shelfName);
 }
 
 void GoodReads::removeFromShelf(const std::vector<std::string>& params) {
-	if (params.size() != 2) {
-		std::cout << "Usage: remove-from-shelf <bookName> <shelfName>\n" << std::endl;
-		return;
-	}
 	std::string bookName = params[0];
 	std::string shelfName = params[1];
 	if (activeUser == nullptr) {
-		std::cout << "You must be logged into an account to add a book to a shelf.\n" << std::endl;
-		return;
+		throw NotLoggedIn();
 	}
 	activeUser->removeFromShelf(bookName, shelfName);
 }
 
 void GoodReads::deleteBook(const std::vector<std::string>& params) {
-	if (params.size() != 1) {
-		std::cout << "Usage: delete-book <bookName>\n" << std::endl;
-		return;
+	if (activeUser == nullptr) {
+		throw NotLoggedIn();
 	}
 	std::string bookName = params[0];
 	activeUser->deleteBook(bookName);
 }
 
 void GoodReads::showShelf(const std::vector<std::string>& params) const  {
-	if (params.size() != 1 && params.size() != 2) {
-		std::cout << "Usage: show-shelf <reader>* <shelfName>\n" << std::endl;
-		return;
-	}
 	std::string username = "";
 	std::string shelfName;
 	if (params.size() == 2) {
@@ -325,22 +295,21 @@ void GoodReads::showShelf(const std::vector<std::string>& params) const  {
 		shelfName = params[0];
 	}
 	if (username == "") {
-		activeUser->showShelf(shelfName);
-		return;
-	}
-	for (size_t i = 0; i < users.size(); i++) {
-		if (users[i]->getUsername() == username) {
-			users[i]->showShelf(shelfName);
-			return;
+		if (activeUser == nullptr) {
+			throw NotLoggedIn();
 		}
+		activeUser->showShelf(shelfName);
 	}
-	std::cout << "User not found.\n" << std::endl;
+	std::shared_ptr<User> user = findUser(username);
+	if (user == nullptr) {
+		throw std::invalid_argument("User not found.\n");
+	}
+	user->showShelf(shelfName);
 }
 
 void GoodReads::showInbox(const std::vector<std::string>& params) const  {
-	if (params.size() != 0 && params.size() != 1) {
-		std::cout << "Usage: show-inbox <filter>*\n" << std::endl;
-		return;
+	if (activeUser == nullptr) {
+		throw NotLoggedIn();
 	}
 	std::string filter = "";
 	if (params.size() == 1) {
@@ -351,61 +320,51 @@ void GoodReads::showInbox(const std::vector<std::string>& params) const  {
 }
 
 void GoodReads::readMessage(const std::vector<std::string>& params) {
-	if (params.size() != 1) {
-		std::cout << "Usage: read-msg <index>\n" << std::endl;
-		return;
+	if (activeUser == nullptr) {
+		throw NotLoggedIn();
 	}
-	for (size_t i = 0; i < params[0].size(); i++) {
-		if (params[0][i] > '9' || params[0][i] < '0') {
-			std::cout << "Invalid index.\n" << std::endl;
-			return;
-		}
+	try {
+		int index = std::stoi(params[0]);
+		activeUser->readMessage(index);
 	}
-	int index = std::stoi(params[0]);
-	activeUser->readMessage(index);
+	catch (const std::invalid_argument& e) {
+		std::cout << "Invalid index.\n" << std::endl;
+	}
 }
 
 void GoodReads::deleteMessage(const std::vector<std::string>& params) {
-	if (params.size() != 1) {
-		std::cout << "Usage: delete-msg <index>\n" << std::endl;
-		return;
+	if (activeUser == nullptr) {
+		throw NotLoggedIn();
 	}
-	for (size_t i = 0; i < params[0].size(); i++) {
-		if (params[0][i] > '9' || params[0][i] < '0') {
-			std::cout << "Invalid index.\n" << std::endl;
-			return;
-		}
+	try{
+		int index = std::stoi(params[0]);
+		activeUser->deleteMessage(index);
 	}
-	int index = std::stoi(params[0]);
-	activeUser->deleteMessage(index);
+	catch (const std::invalid_argument& e) {
+		std::cout << "Invalid index.\n" << std::endl;
+	}
 }
 
 void GoodReads::friends(const std::vector<std::string>& params) const {
-	if (params.size() != 0 && params.size() != 1) {
-		std::cout << "Usage: friends <reader>*\n" << std::endl;
-		return;
-	}
-	std::string username = "";
+	std::shared_ptr<User> user;
 	if (params.size() == 1) {
-		username = params[0];
-	}
-	std::shared_ptr<User> user = nullptr;
-	int friendCount = 0;
-	if (username == "") {
-		user = activeUser;
+		user = findUser(params[0]);
+		if (user == nullptr) {
+			throw std::invalid_argument("User not found.\n");
+		}
 	}
 	else {
-		for (size_t i = 0; i < users.size(); i++) {
-			if (user == nullptr && users[i]->getUsername() == username) {
-				user = users[i];
-			}
+		if (activeUser == nullptr) {
+			throw NotLoggedIn();
 		}
-		if (user == nullptr) {
-			std::cout << "User not found.\n" << std::endl;
-			return;
-		}
+		user = activeUser;
 	}
+	if (user->getUserType() == "publisher") {
+		throw WrongUserCommand("publisher", "friends");
+	}
+	int friendCount = 0;
 	std::cout << "Friends:\n";
+	std::vector<std::shared_ptr<User>> users = userSystem.getUsers();
 	for (int i = 0; i < users.size(); i++) {
 		if (users[i]->isFollowedBy(user->getUsername()) && user->isFollowedBy(users[i]->getUsername())) {
 			std::cout << "- " << users[i]->getUsername() << std::endl;
@@ -419,52 +378,41 @@ void GoodReads::friends(const std::vector<std::string>& params) const {
 }
 
 void GoodReads::addBirthday(const std::vector<std::string>& params) {
-	if (params.size() != 0 && params.size() != 1) {
-		std::cout << "Usage: add-birthday <date>*\n" << std::endl;
-		return;
+	if (activeUser == nullptr) {
+		throw NotLoggedIn();
 	}
 	Date birthday;
 	if (params.size() == 0) {
 		birthday = Date();
 	}
 	else if (params.size() == 1) {
-		for (size_t i = 0; i < params[0].size(); i++) {
-			if ((params[0][i] > '9' || params[0][i] < '0') && params[0][i] != '/') {
-				std::cout << "Invalid date, format: day/mont/year.\n" << std::endl;
-				return;
-			}
+		try {
+			birthday = Date(params[0]);
 		}
-		birthday = Date(params[0]);
+		catch (const std::out_of_range& exception) {
+			std::cerr << "Invalid date: " << exception.what() << std::endl;
+			throw;
+		}
+		catch (const std::invalid_argument& exception) {
+			std::cerr << "Invalid date: " << exception.what() << std::endl;
+			throw;
+		}
 	}
 	activeUser->setBirthday(birthday);
 }
 
 void GoodReads::profile(const std::vector<std::string>& params) const {
-	if (params.size() != 0 && params.size() != 1) {
-		std::cout << "Usage: profile <reader>*\n" << std::endl;
-		return;
-	}
-	std::string username;
-	if (params.size() == 0) {
-		username = "";
-	}
-	else {
-		username = params[0];
-	}
 	std::shared_ptr<User> user = nullptr;
-	if (username == "") {
+	if (params.size() == 0) {
+		if (activeUser == nullptr) {
+			throw NotLoggedIn();
+		}
 		user = activeUser;
 	}
 	else {
-		for (size_t i = 0; i < users.size(); i++) {
-			if (users[i]->getUsername() == username) {
-				user = users[i];
-				break;
-			}
-		}
+		user = findUser(params[0]);
 		if (user == nullptr) {
-			std::cout << "User not found\n";
-			return;
+			throw std::invalid_argument("User not found\n");
 		}
 	}
 	std::cout << "Username: " << user->getUsername() << std::endl;
@@ -483,115 +431,97 @@ void GoodReads::profile(const std::vector<std::string>& params) const {
 }
 
 void GoodReads::acceptOffer(const std::vector<std::string>& params) const {
-	if (params.size() != 1) {
-		std::cout << "Usage: accept-offer <index>\n" << std::endl;
+	if (activeUser == nullptr) {
+		throw NotLoggedIn();
+	}
+	int index;
+	try {
+		index = std::stoi(params[0]);
+	}
+	catch (const std::invalid_argument& e) {
+		std::cout << "Invalid index.\n" << std::endl;
 		return;
 	}
-	for (size_t i = 0; i < params[0].size(); i++) {
-		if (params[0][i] > '9' || params[0][i] < '0') {
-			std::cout << "Invalid index.\n" << std::endl;
-			return;
-		}
-	}
-	int index = std::stoi(params[0]);
 	std::string publisherName = activeUser->getPublisher(index);
-	if (publisherName != "") {
-		std::shared_ptr<User> publisher = nullptr;
-		for (size_t i = 0; i < users.size(); i++) {
-			if (users[i]->getUsername() == publisherName) {
-				publisher = users[i];
-			}
-		}
-		activeUser->acceptOffer(index, publisherName);
-		publisher->workWith(activeUser->getUsername());
-		return;
+	if (publisherName == "") {
+		throw std::invalid_argument("Offer not found.\n");
 	}
+	std::shared_ptr<User> publisher = findUser(publisherName);
+	if (publisher == nullptr) {
+		throw std::invalid_argument("Publisher not found.\n");
+	}
+	activeUser->acceptOffer(index, publisherName);
+	publisher->workWith(activeUser->getUsername());
 }
 
 void GoodReads::leave(const std::vector<std::string>& params) {
-	if (params.size() != 1) {
-		std::cout << "Usage: leave <publisher>\n" << std::endl;
-		return;
+	if (activeUser == nullptr) {
+		throw NotLoggedIn();
 	}
 	std::string publisherName = params[0];
-	for (size_t i = 0; i < users.size(); i++) {
-		if (users[i]->getUsername() == publisherName) {
-			if (users[i]->getUserType() != "publisher") {
-				std::cout << "This user is not a publisher.\n" << std::endl;
-				return;
-			}
-			users[i]->leave(activeUser->getUsername());
-			activeUser->leave(users[i]->getUsername());
-			return;
-		}
+	if (activeUser->isWorkingWith(publisherName) != true) {
+		throw std::logic_error("You are not working with this publisher.\n");
 	}
-	std::cout << "Publisher not found.\n" << std::endl;
+	std::shared_ptr<User>user = findUser(publisherName);
+	if (user == nullptr) {
+		throw std::invalid_argument("Publisher not found.\n");
+	}
+	user->leave(activeUser->getUsername());
+	activeUser->leave(user->getUsername());
 }
 
 void GoodReads::followers(const std::vector<std::string>& params) const {
-	if (params.size() != 0) {
-		std::cout << "Usage: followers\n" << std::endl;
-		return;
+	if (activeUser == nullptr) {
+		throw NotLoggedIn();
+	}
+	if (activeUser->getUserType() != "author") {
+		throw WrongUserCommand(activeUser->getUserType(), "followers");
 	}
 	activeUser->printFollowers();
 }
 
 void GoodReads::publish(const std::vector<std::string>& params) {
-	if (params.size() < 5) {
-		std::cout << "Usage: publish <bookTitle> <authorName> <releaseDate> <pageCount> <genres>\n" << std::endl;
-		return;
+	if (activeUser == nullptr) {
+		throw NotLoggedIn();
 	}
 	std::string bookName = params[0];
 	std::string authorName = params[1];
-	for (size_t i = 0; i < params[2].size(); i++) {
-		if ((params[2][i] > '9' || params[2][i] < '0') && params[2][i] != '/') {
-			std::cout << "Invalid date, format: day/mont/year.\n" << std::endl;
-			return;
-		}
+	Date releaseDate;
+	int pageCount;
+	try {
+		releaseDate = Date(params[2]);
+
 	}
-	Date releaseDate = Date(params[2]);
-	for (size_t i = 0; i < params[3].size(); i++) {
-		if (params[3][i] > '9' || params[3][i] < '0') {
-			std::cout << "Invalid page count.\n" << std::endl;
-			return;
-		}
+	catch (const std::invalid_argument& e) {
+		std::cout << "Invalid date, format: day/mont/year.\n" << std::endl;
+		return;
 	}
-	int pageCount = std::stoi(params[3]);
+	try {
+		pageCount = std::stoi(params[3]);
+	}
+	catch (const std::invalid_argument& e) {
+		std::cout << "Invalid page count.\n" << std::endl;
+		return;
+	}
 	std::vector<std::string> genres;
 	for (int i = 4; i < params.size(); i++) {
 		genres.push_back(params[i]);
 	}
-	std::shared_ptr<Book> book = nullptr;
-	for (size_t i = 0; i < users.size(); i++) {
-		if (users[i]->getUserType() == "publisher") {
-			book = users[i]->getBookByTitle(bookName);
-			if (book != nullptr) {
-				break;
-			}
-		}
-	}
+	std::shared_ptr<Book> book = findBook(bookName);
 	if (book != nullptr) {
-		std::cout << "Book with this title already exists.\n" << std::endl;
-		return;
+		throw std::invalid_argument("Book with this title already exists.\n");
 	}
-	std::shared_ptr<User> author = nullptr;
-	for (size_t i = 0; i < users.size(); i++) {
-		if (users[i]->getUsername() == authorName) {
-			author = users[i];
-			break;
-		}
-	}
+	std::shared_ptr<User> author = findUser(authorName);
 	if (author == nullptr) {
-		std::cout << "Invalid author.\n" << std::endl;
-		return;
+		throw std::invalid_argument("Invalid author.\n");
 	}
-	if (!activeUser->isWorkingWithAuthor(authorName)) {
-		std::cout << "You are not working with this author you cannot publish their book.\n" << std::endl;
-		return;
+	if (!activeUser->isWorkingWith(authorName)) {
+		throw std::invalid_argument("You are not working with this author you cannot publish their book.\n");
 	}
 	std::shared_ptr<Book> newBook = std::make_shared<Book>(bookName, authorName, activeUser->getUsername(), releaseDate, pageCount, genres);
 	std::cout << "You have successfully published the book " << bookName << "\n" << std::endl;
 	std::string activeUserUsername = activeUser->getUsername();
+	std::vector<std::shared_ptr<User>> users = userSystem.getUsers();
 	for (size_t i = 0; i < users.size(); i++) {
 		std::string messageContent = "";
 		if (author->isFollowedBy(users[i]->getUsername()) && activeUser->isFollowedBy(users[i]->getUsername())) {
@@ -613,61 +543,54 @@ void GoodReads::publish(const std::vector<std::string>& params) {
 }
 
 void GoodReads::addSynopsis(const std::vector<std::string>& params) {
-	if (params.size() < 2) {
-		std::cout << "Usage: add-synopsis <bookTitle> <synopsis>\n" << std::endl;
-		return;
+	if (activeUser == nullptr) {
+		throw NotLoggedIn();
+	}
+	if (activeUser->getUserType() != "publisher") {
+		throw WrongUserCommand(activeUser->getUserType(), "follow");
 	}
 	std::string bookName = params[0];
-	std::string synopsis = "#";
+	std::string synopsis = "";
 	for (size_t i = 1; i < params.size(); i++) {
 		synopsis = synopsis + params[i] + " ";
 	}
 	std::shared_ptr<Book> book = activeUser->getBookByTitle(bookName);
 	if (book == nullptr) {
-		std::cout << "You cannot add a synopsis to a book that wasn't published by you.\n" << std::endl;
-		return;
+		throw std::invalid_argument("You cannot add a synopsis to a book that wasn't published by you.\n");
 	}
-	else if (book->getSynopsis() != "#") {
-		std::cout << "This book already has a synopsis.\n" << std::endl;
-		return;
+	else if (book->getSynopsis() != "") {
+		throw std::logic_error("This book already has a synopsis.\n");
 	}
 	book->addSynopsis(synopsis);
 	std::cout << "You have successfully added a synopsis to " << bookName << ".\n" << std::endl;
 }
 
 void GoodReads::offer(const std::vector<std::string>& params) {
-	if (params.size() != 1) {
-		std::cout << "Usage: offer <author>\n" << std::endl;
-		return;
+	if (activeUser == nullptr) {
+		throw NotLoggedIn();
+	}
+	if (activeUser->getUserType() != "publisher") {
+		throw WrongUserCommand(activeUser->getUserType(), "offer");
 	}
 	std::string authorName = params[0];
 	if (activeUser->getUsername() == authorName) {
-		std::cout << "You cannot send yourself a job offer.\n" << std::endl;
-		return;
+		throw std::invalid_argument("You cannot send yourself a job offer.\n");
 	}
-	for (size_t i = 0; i < users.size(); i++) {
-		if (users[i]->getUsername() == authorName) {
-			if (users[i]->getUserType() != "author") {
-				std::cout << "This user is not an author, you cannot send them a job offer.\n" << std::endl;
-				return;
-			}
-			if (users[i]->hasSentJobOffer(activeUser->getUsername())) {
-				std::cout << "This author already has a job offer from you.\n" << std::endl;
-				return;
-			}
-			if (activeUser->isWorkingWithAuthor(users[i]->getUsername())) {
-				std::cout << "You are already working with this author.\n" << std::endl;
-				return;
-			}
-			if (users[i]->getUsername() == authorName && users[i]->getUserType() == "author") {
-				std::string activeUserUsername = activeUser->getUsername();
-				std::string messageContent = activeUserUsername + " has sent you a job offer.";
-				Message message = Message(activeUserUsername, 0, messageContent);
-				users[i]->receiveMessage(message);
-				std::cout << "You have sent " << authorName <<" a job offer.\n" << std::endl;
-				return;
-			}
-		}
+	std::shared_ptr<User> author = findUser(authorName);
+	if (author->getUserType() != "author") {
+		throw std::invalid_argument("This user is not an author, you cannot send them a job offer.\n");
 	}
-	std::cout << "Author not found.\n" << std::endl;
+	if (author->hasSentJobOffer(activeUser->getUsername())) {
+		throw std::invalid_argument("This author already has a job offer from you.\n");
+	}
+	if (author == nullptr) {
+		throw std::invalid_argument("Author not found.\n");
+	}
+	if (author->getUsername() == authorName && author->getUserType() == "author") {
+		std::string activeUserUsername = activeUser->getUsername();
+		std::string messageContent = activeUserUsername + " has sent you a job offer.";
+		Message message = Message(activeUserUsername, 0, messageContent);
+		author->receiveMessage(message);
+		std::cout << "You have sent " << authorName << " a job offer.\n" << std::endl;
+	}
 }
