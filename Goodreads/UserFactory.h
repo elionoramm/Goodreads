@@ -1,14 +1,13 @@
 #pragma once
 #include <iostream>
 #include <memory>
-#include "GoodReads.h"
 #include "User.h"
 #include "Reader.h"
 #include "Author.h"
 #include "Publisher.h"
 #include "UsernameValidator.h"
 #include "PasswordValidator.h"
-#include "UserValidators.h"
+#include "UserValidationService.h"
 
 class UserFactory {
 public:

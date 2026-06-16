@@ -3,16 +3,14 @@
 
 Author::Author(const std::string& username, const std::string& password) : Reader(username, password) {}
 
-void Author::loadUser(std::fstream& file) {
-	Reader::loadUser(file);
+void Author::loadUser(std::fstream& file, const BookSystem& bookSystem) {
+	Reader::loadUser(file, bookSystem);
 	std::string booksPublishedCount;
 	file >> booksPublishedCount;
 	for (size_t i = 0; i < static_cast<size_t>(std::stoull(booksPublishedCount)); i++) {
 		std::string title;
 		file >> title;
-		Book publishedBook = Book(title);
-		publishedBook.loadBook(file);
-		booksPublished.push_back(publishedBook);
+		booksPublished.push_back(bookSystem.findBook(title));
 	}
 	std::string publishersCount;
 	file >> publishersCount;
@@ -28,7 +26,7 @@ void Author::saveUser(std::fstream& file) const {
 	file << std::to_string(booksPublished.size()) << '\n';
 	// saving the published books
 	for (size_t i = 0; i < booksPublished.size(); i++) {
-		booksPublished[i].saveBook(file);
+		file << booksPublished[i]->getTitle() << '\n';
 	}
 	file << std::to_string(publishers.size()) << '\n';
 	// saving the publishers
@@ -87,12 +85,12 @@ std::string Author::getPublisher(const int index) {
 }
 
 void Author::acceptOffer(const int index, const std::string publisher) {
-	workWith(publisher);
+	addPublisher(publisher);
 	deleteMessage(index);
 	std::cout << "You have accepted a job offer from " << publisher << ".\n" << std::endl;
 }
 
-void Author::workWith(const std::string& user) {
+void Author::addPublisher(const std::string& user) {
 	publishers.push_back(user);
 }
 
@@ -107,20 +105,20 @@ void Author::leave(const std::string& publisher) {
 	std::cout << "You cannot leave a publisher you are not working with.\n" << std::endl;
 }
 
-void Author::publish(const std::shared_ptr<Book>& book) {
-	booksPublished.push_back(*book);
+void Author::addToPublishedBooks(const std::shared_ptr<Book>& book) {
+	booksPublished.push_back(book);
 }
 
-bool Author::isWorkingWith(const std::string& user) const {
+bool Author::isWorkingWithPublisher(const std::string& publisher) const {
 	for (size_t i = 0; i < publishers.size(); i++) {
-		if (publishers[i] == user) {
+		if (publishers[i] == publisher) {
 			return true;
 		}
 	}
 	return false;
 }
 
-bool Author::hasSentJobOffer(const std::string& publisher) const {
+bool Author::hasAJobOfferFrom(const std::string& publisher) const {
 	for (size_t i = 0; i < inbox.size(); i++) {
 		if (inbox[i].getMessenger() == publisher) {
 			return true;

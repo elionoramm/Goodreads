@@ -33,7 +33,6 @@ Date::Date(const std::string& string) {
 		throw std::out_of_range("Year cannot be negative.");
 	}
 	if (substrings[1] < 1 || substrings[1] > 12) {
-		std::cout << substrings[1];
 		throw std::out_of_range("Month must be between 1 and 12.");
 	}
 	if (substrings[1] == 1 || substrings[1] == 3 || substrings[1] == 5 || substrings[1] == 7 || substrings[1] == 8 || substrings[1] == 10 || substrings[1] == 12) {

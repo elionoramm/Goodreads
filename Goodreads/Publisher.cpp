@@ -3,8 +3,8 @@
 
 Publisher::Publisher(const std::string& username, const std::string& password) : User(username, password) {}
 
-void Publisher::loadUser(std::fstream& file) {
-	User::loadUser(file);
+void Publisher::loadUser(std::fstream& file, const BookSystem& bookSystem) {
+	User::loadUser(file, bookSystem);
 	std::string authorsCount;
 	file >> authorsCount;
 	for (size_t i = 0; i < static_cast<size_t>(std::stoull(authorsCount)); i++) {
@@ -17,9 +17,7 @@ void Publisher::loadUser(std::fstream& file) {
 	for (size_t i = 0; i < static_cast<size_t>(std::stoull(booksPublishedCount)); i++) {
 		std::string bookTitle;
 		file >> bookTitle;
-		Book book = Book(bookTitle);
-		book.loadBook(file);
-		booksPublished.push_back(std::make_shared<Book>(book));
+		booksPublished.push_back(bookSystem.findBook(bookTitle));
 	}
 }
 
@@ -33,7 +31,7 @@ void Publisher::saveUser(std::fstream& file) const {
 	// saving the published books
 	file << std::to_string(booksPublished.size()) << '\n';
 	for (size_t i = 0; i < booksPublished.size(); i++) {
-		booksPublished[i]->saveBook(file);
+		file << booksPublished[i]->getTitle() << '\n';
 	}
 }
 
@@ -51,90 +49,17 @@ void Publisher::help() const {
 		"offer <author>\n";
 }
 
-// for the reader commands
-void Publisher::addBook(const std::shared_ptr<Book>& book, const std::string& status, const double rating) {
-	throw WrongUserCommand(this->getUserType(), "add-book");
-}
-
-void Publisher::createShelf(const std::string& shelfName) {
-	throw WrongUserCommand(this->getUserType(), "create-shelf");
-}
-
-void Publisher::deleteShelf(const std::string& shelfName) {
-	throw WrongUserCommand(this->getUserType(), "delete-shelf");
-}
-
-void Publisher::addToShelf(const std::shared_ptr<Book>& book, const std::string& shelfName) {
-	throw WrongUserCommand(this->getUserType(), "add-to-shelf");
-}
-
-void Publisher::removeFromShelf(const std::string& bookName, const std::string& shelfName) {
-	throw WrongUserCommand(this->getUserType(), "remove-from-shelf");
-}
-
-void Publisher::deleteBook(const std::string& bookName) {
-	throw WrongUserCommand(this->getUserType(), "delete-book");
-}
-
-void Publisher::showShelf(const std::string& shelfName) const {
-	throw WrongUserCommand(this->getUserType(), "show-shelf");
-}
-
-void Publisher::showInbox(const std::string& filter) const {
-	throw WrongUserCommand(this->getUserType(), "show-inbox");
-}
-
-void Publisher::receiveMessage(const Message& message) {}
-
-void Publisher::readMessage(const size_t& index) {
-	throw WrongUserCommand(this->getUserType(), "read-msg");
-}
-
-void Publisher::deleteMessage(const size_t& index) {
-	throw WrongUserCommand(this->getUserType(), "delete-msg");
-}
-
-void Publisher::setBirthday(const Date& date) {
-	throw WrongUserCommand(this->getUserType(), "add-birthday");
-}
-
-Date Publisher::getBirthday() const {
-	return Date();
-}
-
-void Publisher::printShelves() const {}
-
-void Publisher::printFavoriteBooks() const {
-	throw WrongUserCommand(this->getUserType(), "profile");
-}
-
-// for the author commands
-void Publisher::acceptOffer(const int index, const std::string publisher) {}
-
-std::string Publisher::getPublisher(const int index) {
-	return "";
-}
-
-void Publisher::workWith(const std::string& user) {
+void Publisher::addAuthor(const std::string& user) {
 	authors.push_back(user);
 }
 
-void Publisher::leave(const std::string& author) {
-	for (size_t i = 0; i < authors.size(); i++) {
-		if (authors[i] == author) {
-			authors.erase(authors.begin() + i);
-			return;
-		}
-	}
-}
-// for the publisher commands
-void Publisher::publish(const std::shared_ptr<Book>& book) {
+void Publisher::addToPublishedBooks(const std::shared_ptr<Book>& book) {
 	booksPublished.push_back(book);
 }
 
-bool Publisher::isWorkingWith(const std::string& user) const {
+bool Publisher::isWorkingWithAuthor(const std::string& author) const {
 	for (size_t i = 0; i < authors.size(); i++) {
-		if (authors[i] == user) {
+		if (authors[i] == author) {
 			return true;
 		}
 	}

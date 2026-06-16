@@ -1,5 +1,6 @@
-#include "UserValidators.h"
-void UserValidators::copyFrom(const UserValidators& other) {
+#include "UserValidationService.h"
+
+void UserValidationService::copyFrom(const UserValidationService& other) {
     std::vector<std::unique_ptr<UserValidator>> copiedValidators;
     copiedValidators.reserve(other.validators.size());
     for (const auto& validator : other.validators) {
@@ -8,21 +9,22 @@ void UserValidators::copyFrom(const UserValidators& other) {
     validators = std::move(copiedValidators);
 }
 
-UserValidators::UserValidators(const UserValidators& other) {
+UserValidationService::UserValidationService(const UserValidationService& other) {
 	copyFrom(other);
 }
-UserValidators& UserValidators::operator=(const UserValidators& other) {
+
+UserValidationService& UserValidationService::operator=(const UserValidationService& other) {
 	if (this != &other) {
 		copyFrom(other);
 	}
 	return *this;
 }
 
-void UserValidators::addValidator(const UserValidator& validator) {
+void UserValidationService::addValidator(const UserValidator& validator) {
     validators.push_back(validator.clone());
 }
 
-std::vector<std::string> UserValidators::validate(const std::shared_ptr<User>& user) const {
+std::vector<std::string> UserValidationService::validate(const std::shared_ptr<User>& user) const {
     std::vector<std::string> allErrors;
     for (const auto& validator : validators) {
         std::vector<std::string> errors = validator->validate(user);

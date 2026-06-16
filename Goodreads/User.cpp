@@ -10,7 +10,7 @@ User::User(const std::string& username, const std::string& password) {
 	registrationDate = Date(dateString);
 }
 
-void User::loadUser(std::fstream& file) {
+void User::loadUser(std::fstream& file, const BookSystem& bookSystem) {
 	std::string registrationDateString;
 	file >> registrationDateString;
 	this->registrationDate = Date(registrationDateString);
@@ -43,32 +43,17 @@ Date User::getRegistrationDate() const {
 	return registrationDate;
 }
 
-std::vector<std::string> User::getFollowers() const {
+std::vector<std::string>& User::getFollowers() {
 	return followers;
 }
 
-void User::addFollower(const std::string follower) {
-	if (follower == username) {
-		std::cout << "You cannot follow yourself.\n" << std::endl;
-		return;
-	}
-	for (size_t i = 0; i < followers.size(); i++) {
-		if (followers[i] == follower) {
-			std::cout << "You are already following this user.\n" << std::endl;
-			return;
+std::string User::findFollower(const std::string& username) const {
+	for (auto follower : followers) {
+		if (follower == username) {
+			return follower;
 		}
 	}
-	followers.push_back(follower);
-	std::cout << "You are now following " << username << ".\n" << std::endl;
-	if (this->getUserType() != "publisher") {
-		std::string activeUserUsername = follower;
-		std::string messageContent = activeUserUsername + " has sent you a friend request.";
-		Message message = Message(activeUserUsername, 0, messageContent);
-		this->receiveMessage(message);
-	}
-	else {
-		std::cout << "Publishers cannot follow other users.\n" << std::endl;
-	}
+	return "";
 }
 
 void User::printFollowers() const {

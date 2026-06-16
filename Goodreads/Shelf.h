@@ -6,13 +6,13 @@
 class Shelf {
 private:
 	std::string name;
-	std::vector<Book> books;
+	std::vector<std::shared_ptr<Book>> books;
 public:
 	Shelf(const std::string& name);
 	std::string getName() const;
 	void printShelf() const;
-	bool addBook(const Book book);
+	bool addBook(const std::shared_ptr<Book> book);
 	bool removeBook(const std::string& bookName);
-	Book operator[] (size_t index) const;
+	std::shared_ptr <Book> operator[] (size_t index) const;
 	size_t size() const;
 };

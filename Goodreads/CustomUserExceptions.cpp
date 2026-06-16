@@ -9,9 +9,11 @@ const std::vector<std::string>& ValidationFailedException::getValidationErrors()
     return validationErrors;
 }
 
-NotLoggedIn::NotLoggedIn() : std::runtime_error(message) {}
+NotLoggedIn::NotLoggedIn() : std::runtime_error("No user is currently logged in. Use either \n"
+        "register <username> <password> <userType>\n"
+    "login <username> <password>\n") {}
 
 WrongCommandUsage::WrongCommandUsage(const std::string& message) : std::runtime_error(message) {}
 
-WrongUserCommand::WrongUserCommand(const std::string& userType, const std::string& command) : userType(userType), 
-    command(command), std::runtime_error(message) {}
+WrongUserCommand::WrongUserCommand(const std::string& userType) :
+    std::runtime_error("As a " + userType + " you have no access to this command.\n") {}

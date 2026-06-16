@@ -18,9 +18,6 @@ public:
 };
 
 class NotLoggedIn : public std::runtime_error {
-    std::string message = "No user is currently logged in. Use either \n"
-        "register <username> <password> <userType>\n"
-        "login <username> <password>\n";
 public:
     explicit NotLoggedIn();
     using std::runtime_error::what;
@@ -33,10 +30,7 @@ public:
 };
 
 class WrongUserCommand : public std::runtime_error {
-private:
-    std::string userType, command;
-    std::string message = "As a" +userType + "you have no access to the" + command + "command.";
 public:
-    explicit WrongUserCommand(const std::string& userType, const std::string& command);
+    explicit WrongUserCommand(const std::string& userType);
     using std::runtime_error::what;
 };

@@ -3,20 +3,18 @@
 
 Reader::Reader(const std::string& username, const std::string& password) : User(username, password) {}
 
-void Reader::loadUser(std::fstream& file) {
-	User::loadUser(file);
+void Reader::loadUser(std::fstream& file, const BookSystem& bookSystem) {
+	User::loadUser(file, bookSystem);
 	// loading the profile books
 	std::string profileBooksCount;
 	file >> profileBooksCount;
 	for (size_t i = 0; i < static_cast<size_t>(std::stoull(profileBooksCount)); i++) {
 		std::string bookTitle;
 		file >> bookTitle;
-		Book profileBook = Book(bookTitle);
-		profileBook.loadBook(file);
 		std::string status;
 		double rating;
 		file >> status >> rating;
-		profileBooks.push_back(std::make_tuple(profileBook, status, rating));
+		profileBooks.push_back(std::make_tuple(bookSystem.findBook(bookTitle), status, rating));
 	}
 	// loading the shelf books
 	std::string shelvesCount;
@@ -31,9 +29,7 @@ void Reader::loadUser(std::fstream& file) {
 		for (size_t i = 0; i < static_cast<size_t>(std::stoull(shelfBooksCount)); i++) {
 			std::string bookTitle;
 			file >> bookTitle;
-			Book shelfBook = Book(bookTitle);
-			shelfBook.loadBook(file);
-			shelf.addBook(shelfBook);
+			shelf.addBook(bookSystem.findBook(bookTitle));
 		}
 	}
 	// loading the favorite books
@@ -42,7 +38,7 @@ void Reader::loadUser(std::fstream& file) {
 	for (size_t i = 0; i < static_cast<size_t>(std::stoull(favoriteBooksCount)); i++) {
 		std::string bookTitle;
 		file >> bookTitle;
-		favoriteBooks.push_back(bookTitle);
+		favoriteBooks.push_back(bookSystem.findBook(bookTitle));
 	}
 	// loading the birthday
 	std::string birthdayString;
@@ -67,7 +63,7 @@ void Reader::saveUser(std::fstream& file) const {
 	User::saveUser(file);
 	file << std::to_string(profileBooks.size()) << '\n';
 	for (const auto& [profileBook, status, rating] : profileBooks) {
-		profileBook.saveBook(file);
+		file << profileBook->getTitle() << '\n';
 		file << status << '\n';
 		file << std::to_string(rating) << '\n';
 	}
@@ -76,13 +72,13 @@ void Reader::saveUser(std::fstream& file) const {
 	for (size_t i = 0; i < shelves.size(); i++) {
 		file << shelves[i].getName() << '\n' << std::to_string(shelves[i].size()) << '\n';
 		for (size_t j = 0; j < shelves[i].size(); j++) {
-			shelves[i][j].saveBook(file);
+			file << shelves[i][j]->getTitle() << '\n';
 		}
 	}
 	// saving the favorite books
 	file << std::to_string(favoriteBooks.size()) << '\n';
 	for (size_t i = 0; i < favoriteBooks.size(); i++) {
-		file << favoriteBooks[i] << '\n';
+		file << favoriteBooks[i]->getTitle() << '\n';
 	}
 	// saving the birthday
 	file << birthday.dateToString() << '\n';
@@ -121,12 +117,12 @@ void Reader::help() const {
 
 void Reader::addBook(const std::shared_ptr<Book>& book, const std::string& status, const double rating) {
 	for (auto& [profileBook, currentStatus, currentRrating] : profileBooks) {
-		if (profileBook.getTitle() == book->getTitle()) {
+		if (profileBook->getTitle() == book->getTitle()) {
 			if (currentRrating != 0 && rating != 0) {
 				std::cout << "You have already given this book a rating.\n" << std::endl;
 			}
 			if (currentRrating == 0 && rating > 8) {
-				favoriteBooks.push_back(book->getTitle());
+				favoriteBooks.push_back(book);
 			}
 			if (currentRrating == 0 && rating != 0) {
 				book->addReview(rating);
@@ -139,19 +135,19 @@ void Reader::addBook(const std::shared_ptr<Book>& book, const std::string& statu
 			}
 			else if (currentStatus != status) {
 				currentStatus = status;
-				std::cout << "Changed the status of book " << profileBook.getTitle() << " to " << status << ".\n" << std::endl;
+				std::cout << "Changed the status of book " << profileBook->getTitle() << " to " << status << ".\n" << std::endl;
 				return;
 			}
 		}
 	}
-	Book newBook = Book(book->getTitle(), book->getAuthor(), book->getPublisher(), book->getReleaseDate(), book->getPageCount(), book->getGenres());
+	std::shared_ptr<Book> newBook = std::make_shared<Book>(book->getTitle(), book->getAuthor(), book->getPublisher(), book->getReleaseDate(), book->getPageCount(), book->getGenres());
 	profileBooks.push_back(make_tuple(newBook, status, rating));
 	std::cout << "Book '" << book->getTitle() << "' added to your profile with status '" << status << "'";
 	if (rating != 0) {
 		std::cout << " and rating " << rating;
 		book->addReview(rating);
 		if (rating > 8) {
-			favoriteBooks.push_back(book->getTitle());
+			favoriteBooks.push_back(book);
 		}
 	}
 	std::cout << "\n" << std::endl;
@@ -160,8 +156,7 @@ void Reader::addBook(const std::shared_ptr<Book>& book, const std::string& statu
 void Reader::createShelf(const std::string& shelfName) {
 	for (size_t i = 0; i < shelves.size(); i++) {
 		if (shelves[i].getName() == shelfName) {
-			std::cout << "A shelf with this name already exists.\n" << std::endl;
-			return;
+			throw std::invalid_argument("A shelf with this name already exists.\n");
 		}
 	}
 	shelves.push_back(Shelf(shelfName));
@@ -180,8 +175,8 @@ void Reader::deleteShelf(const std::string& shelfName) {
 }
 
 void Reader::addToShelf(const std::shared_ptr<Book>& book, const std::string& shelfName) {
-	Book newBook = Book(book->getTitle(), book->getAuthor(), book->getPublisher(), book->getReleaseDate(), book->getPageCount(), book->getGenres());
-	newBook.addSynopsis(book->getSynopsis());
+	std::shared_ptr<Book> newBook = std::make_shared<Book>(book->getTitle(), book->getAuthor(), book->getPublisher(), book->getReleaseDate(), book->getPageCount(), book->getGenres());
+	newBook->addSynopsis(book->getSynopsis());
 	for (size_t i = 0; i < shelves.size(); i++) {
 		if (shelves[i].getName() == shelfName) {
 			if(shelves[i].addBook(newBook)){
@@ -217,14 +212,14 @@ void Reader::deleteBook(const std::string& bookName) {
 		}
 	}
 	for (size_t i = 0; i < favoriteBooks.size(); i++) {
-		if (favoriteBooks[i] == bookName) {
+		if (favoriteBooks[i]->getTitle() == bookName) {
 			favoriteBooks.erase(favoriteBooks.begin() + i);
 			std::cout << "Book '" << bookName << "' removed from favorite books.\n";
 		}
 	}
 	for (size_t i = 0; i < profileBooks.size(); i++) {
 		const auto& [profileBook, currentStatus, currentRating] = profileBooks[i];
-		if (profileBook.getTitle() == bookName) {
+		if (profileBook->getTitle() == bookName) {
 			profileBooks.erase(profileBooks.begin() + i);
 			std::cout << "Book '" << bookName << "' removed from your profile.\n" << std::endl;
 			return;
@@ -329,39 +324,4 @@ void Reader::printFavoriteBooks() const {
 	for (size_t i = 0; i < favoriteBooks.size(); i++) {
 		std::cout << "- " << favoriteBooks[i] << "\n";
 	}
-}
-
-void Reader::acceptOffer(const int index, const std::string publisher) {
-	throw WrongUserCommand(this->getUserType(), "accept-offer");
-}
-
-std::string Reader::getPublisher(const int index) {
-	return "";
-}
-
-void Reader::workWith(const std::string& user) {}
-
-void Reader::leave(const std::string& publisher) {
-	throw WrongUserCommand(this->getUserType(), "leave");
-}
-
-void Reader::publish(const std::shared_ptr<Book>& book) {
-	throw WrongUserCommand(this->getUserType(), "publish");
-}
-
-bool Reader::isWorkingWith(const std::string& author) const {
-	return false;
-}
-
-bool Reader::hasSentJobOffer(const std::string& publisher) const {
-	return false;
-}
-
-std::vector<std::shared_ptr<Book>> Reader::getBooks() const {
-	std::vector<std::shared_ptr<Book>> books;
-	return books;
-}
-
-std::shared_ptr<Book> Reader::getBookByTitle(const std::string& title) const {
-	return nullptr;
 }
