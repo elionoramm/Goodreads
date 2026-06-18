@@ -16,9 +16,6 @@ void Profile::execute(std::vector<std::string> params) {
 	}
 	else {
 		user = goodReads.toReader(goodReads.findUser(params[0]));
-		if (user == nullptr) {
-			throw std::invalid_argument("User not found\n");
-		}
 	}
 	std::cout << "Username: " << user->getUsername() << std::endl;
 	std::cout << "Birthday: ";

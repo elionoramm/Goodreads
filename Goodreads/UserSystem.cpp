@@ -1,15 +1,9 @@
 #include "UserSystem.h"
 
-UserSystem::UserSystem(const UserValidationService& userValidationService) : userValidationService(userValidationService) {
-    userFactory = UserFactory();
-}
+UserSystem::UserSystem(const UserValidationService& userValidationService) : userValidationService(userValidationService) {}
 
 const std::vector<std::shared_ptr<User>>& UserSystem::getUsers() const {
     return users;
-}
-
-UserFactory& UserSystem::getUserFactory() {
-    return userFactory;
 }
 
 std::optional<std::shared_ptr<User>> UserSystem::operator[](const std::string& username) const {
@@ -39,6 +33,7 @@ std::shared_ptr<User> UserSystem::findUser(const std::string& username) const {
             return user;
         }
     }
+    throw std::invalid_argument("Username not found.\n");
     return nullptr;
 }
 
@@ -49,7 +44,7 @@ void UserSystem::loadUserSystem(std::fstream& file, const BookSystem& bookSystem
         std::string userType, username, password;
         file >> userType >> username >> password;
         try {
-            std::shared_ptr<User> user = userFactory.createUser(userType, username, password);
+            std::shared_ptr<User> user = UserFactory::createUser(userType, username, password);
             user->loadUser(file, bookSystem);
             addUser(user);
         }

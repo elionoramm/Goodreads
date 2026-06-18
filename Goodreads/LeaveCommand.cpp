@@ -11,13 +11,10 @@ void Leave::execute(std::vector<std::string> params) {
 		throw WrongCommandUsage("Usage: leave <publisher>\n");
 	}
 	std::string publisherName = params[0];
+	std::shared_ptr<Publisher> user = goodReads.toPublisher(goodReads.findUser(publisherName));
 	if (activeUser->isWorkingWithPublisher(publisherName) != true) {
 		throw std::logic_error("You are not working with this publisher.\n");
 	}
-	std::shared_ptr<Author> user = goodReads.toAuthor(goodReads.findUser(publisherName));
-	if (user == nullptr) {
-		throw std::invalid_argument("Publisher not found.\n");
-	}
-	user->leave(activeUser->getUsername());
+	user->removeAuthor(activeUser->getUsername());
 	activeUser->leave(user->getUsername());
 }

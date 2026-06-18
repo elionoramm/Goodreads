@@ -8,10 +8,7 @@ Date::Date(const std::string& string) {
 	for (int i = 0; i <= string.size(); i++) {
 		if (string[i] != '/' && string[i] != '\0') {
 			if (string[i] > '9' || string[i] < '0') {
-				this->day = 0;
-				this->month = 0;
-				this->year = 0;
-				return;
+				throw std::invalid_argument("Invalid date. Expected format: 'day/month/year'.\n");
 			}
 			number = number + string[i];
 		}

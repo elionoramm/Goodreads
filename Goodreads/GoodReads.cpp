@@ -89,7 +89,7 @@ std::shared_ptr<Reader> GoodReads::toReader(const std::shared_ptr<User> user) co
 	if (user->getUserType() != "publisher") {
 		return dynamic_pointer_cast<Reader>(user);
 	}
-	throw std::invalid_argument(user->getUserType() + " is not a reader.\n");
+	throw std::invalid_argument(user->getUsername() + " is not a reader.\n");
 	return nullptr;
 }
 
@@ -97,7 +97,7 @@ std::shared_ptr<Author> GoodReads::toAuthor(const std::shared_ptr<User> user) co
 	if (user->getUserType() == "author") {
 		return dynamic_pointer_cast<Author>(user);
 	}
-	throw std::invalid_argument(user->getUserType() + " is not a author.\n");
+	throw std::invalid_argument(user->getUsername() + " is not a author.\n");
 	return nullptr;
 }
 
@@ -105,6 +105,10 @@ std::shared_ptr<Publisher> GoodReads::toPublisher(const std::shared_ptr<User> us
 	if (user->getUserType() == "publisher") {
 		return dynamic_pointer_cast<Publisher>(user);
 	}
-	throw std::invalid_argument(user->getUserType() + " is not a publisher.\n");
+	throw std::invalid_argument(user->getUsername() + " is not a publisher.\n");
 	return nullptr;
+}
+
+void GoodReads::setActiveUser(std::shared_ptr<User> user) {
+	activeUser = user;
 }

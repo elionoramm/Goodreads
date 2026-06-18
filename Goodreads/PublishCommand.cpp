@@ -18,7 +18,7 @@ void Publish::execute(std::vector<std::string> params) {
 		releaseDate = Date(params[2]);
 	}
 	catch (const std::invalid_argument& e) {
-		std::cout << "Invalid date, format: day/mont/year.\n" << std::endl;
+		std::cout << e.what() << std::endl;
 		return;
 	}
 	try {
@@ -37,9 +37,6 @@ void Publish::execute(std::vector<std::string> params) {
 		throw std::invalid_argument("Book with this title already exists.\n");
 	}
 	std::shared_ptr<Author> author = goodReads.toAuthor(goodReads.findUser(authorName));
-	if (author == nullptr) {
-		throw std::invalid_argument("Invalid author.\n");
-	}
 	if (!activeUser->isWorkingWithAuthor(authorName)) {
 		throw std::invalid_argument("You are not working with this author you cannot publish their book.\n");
 	}

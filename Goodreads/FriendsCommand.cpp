@@ -13,9 +13,6 @@ void Friends::execute(std::vector<std::string> params) {
 	std::shared_ptr<User> targetUser;
 	if (params.size() == 1) {
 		targetUser = goodReads.findUser(params[0]);
-		if (targetUser == nullptr) {
-			throw std::invalid_argument("User not found.\n");
-		}
 	}
 	else {
 		targetUser = activeUser;

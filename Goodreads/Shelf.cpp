@@ -10,11 +10,12 @@ std::string Shelf::getName() const {
 }
 
 void Shelf::printShelf() const {
+	if (books.size() == 0) {
+		std::cout << "This shelf is empty.\n";
+		return;
+	}
 	for (size_t i = 0; i < books.size(); i++) {
 		std::cout << "- " << books[i]->getTitle() << std::endl;
-	}
-	if (books.size() == 0) {
-		std::cout << "This shelf is empty.\n" << std::endl;
 	}
 }
 

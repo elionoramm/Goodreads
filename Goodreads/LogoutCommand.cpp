@@ -9,6 +9,6 @@ void Logout::execute(std::vector<std::string> params) {
 	if (params.size() != 0) {
 		throw WrongCommandUsage("Usage: logout\n");
 	}
-	goodReads.getActiveUser() = nullptr;
+	goodReads.setActiveUser(nullptr);
 	std::cout << "Logged out successfully.\n" << std::endl;
 }

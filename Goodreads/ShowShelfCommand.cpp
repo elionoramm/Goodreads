@@ -19,12 +19,12 @@ void ShowShelf::execute(std::vector<std::string> params) {
 	else if (params.size() == 1) {
 		shelfName = params[0];
 	}
+	std::shared_ptr<Reader> user;
 	if (username == "") {
-		activeUser->showShelf(shelfName);
+		user = activeUser;
 	}
-	std::shared_ptr<Reader> user = goodReads.toReader(goodReads.findUser(username));
-	if (user == nullptr) {
-		throw std::invalid_argument("User not found.\n");
+	else {
+		user = goodReads.toReader(goodReads.findUser(username));
 	}
 	user->showShelf(shelfName);
 }

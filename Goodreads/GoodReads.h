@@ -33,4 +33,5 @@ public:
 	std::shared_ptr<Reader> toReader(const std::shared_ptr<User> user) const;
 	std::shared_ptr<Author> toAuthor(const std::shared_ptr<User> user) const;
 	std::shared_ptr<Publisher> toPublisher(const std::shared_ptr<User> user) const;
+	void setActiveUser(std::shared_ptr<User> user);
 };

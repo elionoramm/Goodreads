@@ -21,7 +21,6 @@ public:
 	void addAuthor(const std::string& user);
 	void addToPublishedBooks(const std::shared_ptr<Book>& book);
 	bool isWorkingWithAuthor(const std::string& author) const;
-	bool hasSentJobOffer(const std::string& publisher) const;
-	std::vector<std::shared_ptr<Book>> getBooks() const;
+	void removeAuthor(const std::string& author);
 	std::shared_ptr<Book> getBookByTitle(const std::string& title) const;
 };

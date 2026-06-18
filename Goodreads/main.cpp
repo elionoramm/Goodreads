@@ -26,17 +26,17 @@ int main() {
 				word = "";
 			}
 		}
-		if (params.size() != 0) {
-			command = commandFactory.create(params[0]);
-			params.erase(params.begin());
-		}
 		try {
-			command->execute(params);
+			if (params.size() != 0) {
+				command = commandFactory.create(params[0]);
+				params.erase(params.begin());
+				command->execute(params);
+			}
 		}
 		catch (const WrongUserCommand& ex) {
 			std::cout << ex.what() << '\n';
 		}
-		catch (const WrongCommandUsage& ex){
+		catch (const WrongCommandUsage& ex) {
 			std::cout << ex.what() << '\n';
 		}
 		catch (const NotLoggedIn& ex) {

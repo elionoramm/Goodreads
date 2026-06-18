@@ -12,10 +12,10 @@ void Register::execute(std::vector<std::string> params) {
 	std::string password = params[1];
 	std::string userType = params[2];
 	try {
-		std::shared_ptr<User> user = userSystem.getUserFactory().createUser(userType, username, password);
+		std::shared_ptr<User> user = UserFactory::createUser(userType, username, password);
 		userSystem.addUser(user);
-		std::cout << "User registered successfully.\n";
-		activeUser = user;
+		std::cout << "User registered successfully.\n" << std::endl;
+		goodReads.setActiveUser(user);
 	}
 	catch (const std::invalid_argument& ex) {
 		std::cout << ex.what() << '\n';

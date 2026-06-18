@@ -66,12 +66,12 @@ bool Publisher::isWorkingWithAuthor(const std::string& author) const {
 	return false;
 }
 
-bool Publisher::hasSentJobOffer(const std::string& publisher) const {
-	return false;
-}
-
-std::vector<std::shared_ptr<Book>> Publisher::getBooks() const {
-	return booksPublished;
+void Publisher::removeAuthor(const std::string& author) {
+	for (size_t i = 0; i < authors.size(); i++) {
+		if (authors[i] == author) {
+			authors.erase(authors.begin() + i);
+		}
+	}
 }
 
 std::shared_ptr<Book> Publisher::getBookByTitle(const std::string& title) const {

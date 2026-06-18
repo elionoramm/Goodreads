@@ -22,14 +22,13 @@ void Reader::loadUser(std::fstream& file, const BookSystem& bookSystem) {
 	for (size_t i = 0; i < static_cast<size_t>(std::stoull(shelvesCount)); i++) {
 		std::string shelfName;
 		file >> shelfName;
-		Shelf shelf = Shelf(shelfName);
-		shelves.push_back(shelf);
+		shelves.push_back(Shelf(shelfName));
 		std::string shelfBooksCount;
 		file >> shelfBooksCount;
 		for (size_t i = 0; i < static_cast<size_t>(std::stoull(shelfBooksCount)); i++) {
 			std::string bookTitle;
 			file >> bookTitle;
-			shelf.addBook(bookSystem.findBook(bookTitle));
+			shelves[i].addBook(bookSystem.findBook(bookTitle));
 		}
 	}
 	// loading the favorite books
@@ -236,6 +235,7 @@ void Reader::showShelf(const std::string& shelfName) const {
 		if (shelves[i].getName() == shelfName) {
 			std::cout << "Books in shelf '" << shelfName << "':\n";
 			shelves[i].printShelf();
+			std::cout << std::endl;
 			return;
 		}
 	}
@@ -274,7 +274,7 @@ void Reader::readMessage(const size_t& index) {
 	}
 	Message message = inbox[index - 1];
 	std::cout << message.getMessageContent() << "\n" << std::endl;
-	message.markAsRead();
+	inbox[index - 1].markAsRead();
 }
 
 void Reader::deleteMessage(const size_t& index) {
@@ -289,6 +289,7 @@ void Reader::deleteMessage(const size_t& index) {
 void Reader::setBirthday(const Date& date) {
 	if (birthday.isSet() && !date.isSet()) {
 		std::cout << "Birthday erased successfully.\n" << std::endl;
+		birthday = date;
 		return;
 	}
 	if (birthday.isSet() && date.isSet()) {
@@ -306,13 +307,13 @@ Date Reader::getBirthday() const {
 
 void Reader::printShelves() const {
 	if (shelves.size() == 0) {
-		std::cout << "No shelves in this profile." << std::endl;
+		std::cout << "No shelves in this profile.\n";
 		return;
 	}
 	for (size_t i = 0; i < shelves.size(); i++) {
+		std::cout << shelves[i].getName() << ":\n";
 		shelves[i].printShelf();
 	}
-	std::cout << std::endl;
 }
 
 void Reader::printFavoriteBooks() const {

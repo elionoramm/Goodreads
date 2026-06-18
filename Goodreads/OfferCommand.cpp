@@ -21,8 +21,8 @@ void Offer::execute(std::vector<std::string> params) {
 	if (author->hasAJobOfferFrom(activeUser->getUsername())) {
 		throw std::invalid_argument("This author already has a job offer from you.\n");
 	}
-	if (author == nullptr) {
-		throw std::invalid_argument("Author not found.\n");
+	if (author->isWorkingWithPublisher(activeUser->getUsername())) {
+		throw std::invalid_argument("You are already working with this author.\n");
 	}
 	if (author->getUsername() == authorName && author->getUserType() == "author") {
 		std::string activeUserUsername = activeUser->getUsername();

@@ -23,9 +23,6 @@ void AcceptOffer::execute(std::vector<std::string> params) {
 		throw std::invalid_argument("Offer not found.\n");
 	}
 	std::shared_ptr<Publisher> publisher = goodReads.toPublisher(goodReads.findUser(publisherName));
-	if (publisher == nullptr) {
-		throw std::invalid_argument("Publisher not found.\n");
-	}
 	activeUser->acceptOffer(index, publisherName);
 	publisher->addAuthor(activeUser->getUsername());
 }

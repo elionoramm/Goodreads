@@ -10,5 +10,5 @@ std::shared_ptr<User> UserFactory::createUser(const std::string& userType, const
 	else if (userType == "publisher") {
 		return std::make_shared<Publisher>(username, password);
 	}
-	throw std::invalid_argument("Invalid user type: " + userType);
+	throw std::invalid_argument("Invalid user type: " + userType + '\n');
 }

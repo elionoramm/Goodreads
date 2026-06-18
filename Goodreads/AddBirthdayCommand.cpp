@@ -18,13 +18,13 @@ void AddBirthday::execute(std::vector<std::string> params) {
 		try {
 			birthday = Date(params[0]);
 		}
-		catch (const std::out_of_range& exception) {
-			std::cerr << "Invalid date: " << exception.what() << std::endl;
-			throw;
+		catch (const std::out_of_range& e) {
+			std::cout << e.what() << std::endl;
+			return;
 		}
-		catch (const std::invalid_argument& exception) {
-			std::cerr << "Invalid date: " << exception.what() << std::endl;
-			throw;
+		catch (const std::invalid_argument& e) {
+			std::cout << e.what() << std::endl;
+			return;
 		}
 	}
 	activeUser->setBirthday(birthday);

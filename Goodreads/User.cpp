@@ -58,12 +58,14 @@ std::string User::findFollower(const std::string& username) const {
 
 void User::printFollowers() const {
 	std::cout << "Followers:\n";
+	if (followers.size() == 0) {
+		std::cout << "You have no followers yet.\n" << std::endl;
+		return;
+	}
 	for (size_t i = 0; i < followers.size(); i++) {
 		std::cout << "- " << followers[i] << std::endl;
 	}
-	if (followers.size() == 0) {
-		std::cout << "You have no followers yet.\n" << std::endl;
-	}
+	std::cout << std::endl;
 }
 
 bool User::isFollowedBy(const std::string& username) const {
