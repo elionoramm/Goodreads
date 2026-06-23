@@ -26,5 +26,8 @@ void ShowShelf::execute(std::vector<std::string> params) {
 	else {
 		user = goodReads.toReader(goodReads.findUser(username));
 	}
+	if (username != "" && (!user->isFollowedBy(activeUser->getUsername()) || !activeUser->isFollowedBy(user->getUsername()))) {
+		throw std::invalid_argument("You are not friends with this user.\n");
+	}
 	user->showShelf(shelfName);
 }
